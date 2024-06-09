@@ -12,3 +12,5 @@ val Pink40 = Color(0xFF7D5260)
 
 val WarnaUtama = Color(0xFF5843BE)
 val AbuAbu = Color(0xFFB5B5B5)
+val Orange = Color(0xFFFF9376)
+val AbuGelap = Color(0xFF7A7E86)

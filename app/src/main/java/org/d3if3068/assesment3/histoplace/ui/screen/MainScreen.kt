@@ -2,6 +2,7 @@ package org.d3if3068.assesment3.histoplace.ui.screen
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -45,6 +46,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import org.d3if3068.assesment3.histoplace.R
@@ -57,7 +60,10 @@ import org.d3if3068.assesment3.histoplace.ui.theme.WarnaUtama
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen() {
+fun MainScreen(
+    onNavigateToScreen: ( String, String, Int, String, List<String>, String, String, String, String) -> Unit,
+    navController: NavHostController
+) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -86,12 +92,15 @@ fun MainScreen() {
             }
         }
     ) { padding ->
-        ScreenContent(Modifier.padding(padding))
+        ScreenContent(Modifier.padding(padding), onNavigateToScreen)
     }
 }
 
 @Composable
-fun ScreenContent(modifier: Modifier) {
+fun ScreenContent(
+    modifier: Modifier,
+    onNavigateToScreen: (String, String, Int, String, List<String>, String, String, String, String) -> Unit
+) {
     val viewModel: MainViewModel = viewModel()
     val data by viewModel.data
     val status by viewModel.status.collectAsState()
@@ -102,7 +111,7 @@ fun ScreenContent(modifier: Modifier) {
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator(progress = 2f)
+                CircularProgressIndicator(1f)
             }
         }
 
@@ -152,7 +161,10 @@ fun ScreenContent(modifier: Modifier) {
                 )
                 LazyColumn(contentPadding = PaddingValues(bottom = 40.dp)) {
                     items(data) {
-                        ListItem(tempat = it)
+                        ListItem(
+                            onNavigateToScreen = onNavigateToScreen,
+                            tempat = it
+                        )
                     }
                 }
             }
@@ -178,9 +190,26 @@ fun ScreenContent(modifier: Modifier) {
 }
 
 @Composable
-fun ListItem(tempat: Tempat) {
+fun ListItem(
+    tempat: Tempat,
+    onNavigateToScreen: (String, String, Int, String, List<String>, String, String, String, String) -> Unit
+) {
     Row(
-        modifier = Modifier.padding(bottom = 30.dp),
+        modifier = Modifier
+            .padding(bottom = 30.dp)
+            .clickable {
+                onNavigateToScreen(
+                    tempat.imageId,
+                    tempat.namaTempat,
+                    tempat.rating,
+                    tempat.biayaMasuk,
+                    tempat.photos,
+                    tempat.alamat,
+                    tempat.kota,
+                    tempat.mapUrl,
+                    tempat.catatan
+                )
+            },
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
@@ -261,6 +290,10 @@ fun ListItem(tempat: Tempat) {
 @Composable
 fun MainScreenPrev() {
     HistoPlaceTheme {
-        MainScreen()
+        MainScreen(
+            onNavigateToScreen = {imageId, namaTempat, rating, biayaMasuk, photos, alamat, kota, mapUrl, catatan ->
+            },
+            rememberNavController()
+        )
     }
 }
