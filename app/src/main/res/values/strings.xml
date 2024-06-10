@@ -4,4 +4,7 @@
     <string name="error">Error</string>
     <string name="try_again">Try Again</string>
     <string name="profil">Profil</string>
+    <string name="judul_loading">Apa Sejarah Dari\nTempat Ini?</string>
+    <string name="cerita_monas">Monumen Nasional (Monas) adalah sebuah tugu setinggi 132 meter yang terletak di tengah Lapangan Medan Merdeka, Jakarta, Indonesia. Monas didirikan untuk memperingati perjuangan rakyat Indonesia dalam merebut kemerdekaan dari penjajahan Belanda</string>
+    <string name="loading">"Loading   "</string>
 </resources>

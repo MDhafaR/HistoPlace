@@ -75,51 +75,58 @@ import org.d3if3068.assesment3.histoplace.ui.theme.WarnaUtama
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
-    onNavigateToScreen: ( String, String, Int, String, List<String>, String, String, String, String) -> Unit,
+    onNavigateToScreen: (String, String, Int, String, List<String>, String, String, String, String) -> Unit,
     navController: NavHostController
 ) {
     val context = LocalContext.current
+    val viewModel: MainViewModel = viewModel()
+    val status by viewModel.status.collectAsState()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Icon(
-                        modifier = Modifier.size(50.dp),
-                        painter = painterResource(id = R.drawable.logo),
-                        contentDescription = "Logo",
-                        tint = WarnaUtama
-                    )
-                },
-                colors = TopAppBarDefaults.mediumTopAppBarColors(
-                    containerColor = Color.Transparent
-                ),
-                actions = {
-                    IconButton(onClick = {
-                        CoroutineScope(Dispatchers.IO).launch { signIn(context) }
-                    }) {
-                        Icon(painter = painterResource(id = R.drawable.account_circle),
-                            contentDescription = stringResource(R.string.profil),
-                            tint = WarnaUtama,
-                            modifier = Modifier.size(35.dp)
+    if (status == ApiStatus.LOADING) {
+        LoadingScreen()
+    } else {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Icon(
+                            modifier = Modifier.size(50.dp),
+                            painter = painterResource(id = R.drawable.logo),
+                            contentDescription = "Logo",
+                            tint = WarnaUtama
                         )
+                    },
+                    colors = TopAppBarDefaults.mediumTopAppBarColors(
+                        containerColor = Color.Transparent
+                    ),
+                    actions = {
+                        IconButton(onClick = {
+                            CoroutineScope(Dispatchers.IO).launch { signIn(context) }
+                        }) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.account_circle),
+                                contentDescription = stringResource(R.string.profil),
+                                tint = WarnaUtama,
+                                modifier = Modifier.size(35.dp)
+                            )
+                        }
                     }
-                }
-            )
-        },
-        floatingActionButton = {
-            IconButton(
-                modifier = Modifier.size(57.dp),
-                onClick = { /*TODO*/ }) {
-                Image(
-                    modifier = Modifier.size(43.dp),
-                    painter = painterResource(id = R.drawable.fab),
-                    contentDescription = "fab"
                 )
+            },
+            floatingActionButton = {
+                IconButton(
+                    modifier = Modifier.size(57.dp),
+                    onClick = { /*TODO*/ }) {
+                    Image(
+                        modifier = Modifier.size(43.dp),
+                        painter = painterResource(id = R.drawable.fab),
+                        contentDescription = "fab"
+                    )
+                }
             }
+        ) { padding ->
+            ScreenContent(Modifier.padding(padding), onNavigateToScreen)
         }
-    ) { padding ->
-        ScreenContent(Modifier.padding(padding), onNavigateToScreen)
     }
 }
 
@@ -134,12 +141,6 @@ fun ScreenContent(
 
     when (status) {
         ApiStatus.LOADING -> {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(1f)
-            }
         }
 
         ApiStatus.SUCCESS -> {
@@ -155,8 +156,7 @@ fun ScreenContent(
                     shape = RoundedCornerShape(17.dp),
                     leadingIcon = {
                         Image(
-                            modifier = Modifier
-                                .size(20.dp),
+                            modifier = Modifier.size(20.dp),
                             painter = painterResource(id = R.drawable.search),
                             contentDescription = stringResource(R.string.search)
                         )
