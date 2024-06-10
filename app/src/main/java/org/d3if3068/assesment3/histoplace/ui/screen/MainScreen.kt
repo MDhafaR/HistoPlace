@@ -33,6 +33,9 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -67,10 +70,13 @@ import org.d3if3068.assesment3.histoplace.BuildConfig
 import org.d3if3068.assesment3.histoplace.R
 import org.d3if3068.assesment3.histoplace.model.MainViewModel
 import org.d3if3068.assesment3.histoplace.model.Tempat
+import org.d3if3068.assesment3.histoplace.model.User
 import org.d3if3068.assesment3.histoplace.network.ApiStatus
+import org.d3if3068.assesment3.histoplace.network.UserDataStore
 import org.d3if3068.assesment3.histoplace.ui.theme.AbuAbu
 import org.d3if3068.assesment3.histoplace.ui.theme.HistoPlaceTheme
 import org.d3if3068.assesment3.histoplace.ui.theme.WarnaUtama
+import org.d3if3068.assesment3.histoplace.ui.widget.ProfilDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -81,6 +87,10 @@ fun MainScreen(
     val context = LocalContext.current
     val viewModel: MainViewModel = viewModel()
     val status by viewModel.status.collectAsState()
+    val dataStore = UserDataStore(context)
+    val user by dataStore.userFlow.collectAsState(User())
+
+    var showDialog by remember { mutableStateOf(false) }
 
     if (status == ApiStatus.LOADING) {
         LoadingScreen()
@@ -101,7 +111,12 @@ fun MainScreen(
                     ),
                     actions = {
                         IconButton(onClick = {
-                            CoroutineScope(Dispatchers.IO).launch { signIn(context) }
+                            if (user.email.isEmpty()) {
+                                CoroutineScope(Dispatchers.IO).launch { signIn(context, dataStore) }
+                            }
+                            else {
+                                showDialog = true
+                            }
                         }) {
                             Icon(
                                 painter = painterResource(id = R.drawable.account_circle),
@@ -126,6 +141,13 @@ fun MainScreen(
             }
         ) { padding ->
             ScreenContent(Modifier.padding(padding), onNavigateToScreen)
+            if (showDialog) {
+                ProfilDialog(
+                    user = user,
+                    onDismissRequest = { showDialog = false }) {
+                    showDialog = false
+                }
+            }
         }
     }
 }
@@ -312,7 +334,7 @@ fun ListItem(
     }
 }
 
-private suspend fun signIn(context: Context) {
+private suspend fun signIn(context: Context, dataStore: UserDataStore) {
     val googleIdOption: GetGoogleIdOption = GetGoogleIdOption.Builder()
         .setFilterByAuthorizedAccounts(false)
         .setServerClientId(BuildConfig.API_KEY)
@@ -325,19 +347,22 @@ private suspend fun signIn(context: Context) {
     try {
         val credentialManager = CredentialManager.create(context)
         val result = credentialManager.getCredential(context, request)
-        handleSignIn(result)
+        handleSignIn(result, dataStore)
     } catch (e: GetCredentialException){
         Log.e("SIGN-IN", "Error: ${e.errorMessage}")
     }
 }
 
-private fun handleSignIn(result: GetCredentialResponse) {
+private suspend fun handleSignIn(result: GetCredentialResponse, dataStore: UserDataStore) {
     val credential = result.credential
     if (credential is CustomCredential &&
         credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
         try {
             val googleId = GoogleIdTokenCredential.createFrom(credential.data)
-            Log.d("SIGN-IN", "User email: ${googleId.id}")
+            val nama = googleId.displayName ?: ""
+            val email = googleId.id
+            val photoUrl = googleId.profilePictureUri.toString()
+            dataStore.saveData(User(nama, email, photoUrl))
         } catch (e: GoogleIdTokenParsingException) {
             Log.e("SIGN-IN", "Error: ${e.message}")
         }
