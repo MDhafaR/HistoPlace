@@ -1,7 +1,13 @@
 package org.d3if3068.assesment3.histoplace.ui.screen
 
+import android.content.ContentResolver
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.ImageDecoder
+import android.os.Build
+import android.provider.MediaStore
 import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -62,6 +68,10 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.canhub.cropper.CropImageContract
+import com.canhub.cropper.CropImageContractOptions
+import com.canhub.cropper.CropImageOptions
+import com.canhub.cropper.CropImageView
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
@@ -94,6 +104,11 @@ fun MainScreen(
 
     var showDialog by remember { mutableStateOf(false) }
 
+    var bitmap: Bitmap? by remember { mutableStateOf(null) }
+    val launcher = rememberLauncherForActivityResult(CropImageContract()) {
+        bitmap = getCroppedImage(context.contentResolver, it)
+    }
+
     if (status == ApiStatus.LOADING) {
         LoadingScreen()
     } else {
@@ -115,8 +130,7 @@ fun MainScreen(
                         IconButton(onClick = {
                             if (user.email.isEmpty()) {
                                 CoroutineScope(Dispatchers.IO).launch { signIn(context, dataStore) }
-                            }
-                            else {
+                            } else {
                                 showDialog = true
                             }
                         }) {
@@ -133,7 +147,16 @@ fun MainScreen(
             floatingActionButton = {
                 IconButton(
                     modifier = Modifier.size(57.dp),
-                    onClick = { /*TODO*/ }) {
+                    onClick = {
+                        val option = CropImageContractOptions(
+                            null, CropImageOptions(
+                                imageSourceIncludeGallery = false,
+                                imageSourceIncludeCamera = true,
+                                fixAspectRatio = true
+                            )
+                        )
+                        launcher.launch(option)
+                    }) {
                     Image(
                         modifier = Modifier.size(43.dp),
                         painter = painterResource(id = R.drawable.fab),
@@ -351,7 +374,7 @@ private suspend fun signIn(context: Context, dataStore: UserDataStore) {
         val credentialManager = CredentialManager.create(context)
         val result = credentialManager.getCredential(context, request)
         handleSignIn(result, dataStore)
-    } catch (e: GetCredentialException){
+    } catch (e: GetCredentialException) {
         Log.e("SIGN-IN", "Error: ${e.errorMessage}")
     }
 }
@@ -359,7 +382,8 @@ private suspend fun signIn(context: Context, dataStore: UserDataStore) {
 private suspend fun handleSignIn(result: GetCredentialResponse, dataStore: UserDataStore) {
     val credential = result.credential
     if (credential is CustomCredential &&
-        credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+        credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
+    ) {
         try {
             val googleId = GoogleIdTokenCredential.createFrom(credential.data)
             val nama = googleId.displayName ?: ""
@@ -369,8 +393,7 @@ private suspend fun handleSignIn(result: GetCredentialResponse, dataStore: UserD
         } catch (e: GoogleIdTokenParsingException) {
             Log.e("SIGN-IN", "Error: ${e.message}")
         }
-    }
-    else {
+    } else {
         Log.e("SIGN-IN", "Error: unrecognized custom credential type")
     }
 }
@@ -387,12 +410,31 @@ private suspend fun signOut(context: Context, dataStore: UserDataStore) {
     }
 }
 
+private fun getCroppedImage(
+    resolver: ContentResolver,
+    result: CropImageView.CropResult
+): Bitmap? {
+    if (!result.isSuccessful) {
+        Log.e("IMAGE", "Error: ${result.error}")
+        return null
+    }
+
+    var uri = result.uriContent ?: return null
+
+    return if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+        MediaStore.Images.Media.getBitmap(resolver, uri)
+    } else {
+        val source = ImageDecoder.createSource(resolver, uri)
+        ImageDecoder.decodeBitmap(source)
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
 fun MainScreenPrev() {
     HistoPlaceTheme {
         MainScreen(
-            onNavigateToScreen = {imageId, namaTempat, rating, biayaMasuk, photos, alamat, kota, mapUrl, catatan ->
+            onNavigateToScreen = { imageId, namaTempat, rating, biayaMasuk, photos, alamat, kota, mapUrl, catatan ->
             },
             rememberNavController()
         )
