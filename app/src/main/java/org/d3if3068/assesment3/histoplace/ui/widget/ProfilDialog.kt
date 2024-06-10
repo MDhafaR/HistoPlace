@@ -84,6 +84,7 @@ fun ProfilDialog(
                     ) {
                         Text(stringResource(R.string.tutup))
                     }
+
                     OutlinedButton(
                         onClick = { onConfirmation() },
                         modifier = Modifier.padding(8.dp),
