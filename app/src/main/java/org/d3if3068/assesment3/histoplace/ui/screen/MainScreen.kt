@@ -7,6 +7,7 @@ import android.graphics.ImageDecoder
 import android.os.Build
 import android.provider.MediaStore
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -88,12 +89,13 @@ import org.d3if3068.assesment3.histoplace.network.UserDataStore
 import org.d3if3068.assesment3.histoplace.ui.theme.AbuAbu
 import org.d3if3068.assesment3.histoplace.ui.theme.HistoPlaceTheme
 import org.d3if3068.assesment3.histoplace.ui.theme.WarnaUtama
+import org.d3if3068.assesment3.histoplace.ui.widget.InputDialog
 import org.d3if3068.assesment3.histoplace.ui.widget.ProfilDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
-    onNavigateToScreen: (String, String, Int, String, List<String>, String, String, String, String) -> Unit,
+    onNavigateToScreen: (String, String, Int, String, List<String>?, String, String, String, String) -> Unit,
     navController: NavHostController
 ) {
     val context = LocalContext.current
@@ -102,11 +104,15 @@ fun MainScreen(
     val dataStore = UserDataStore(context)
     val user by dataStore.userFlow.collectAsState(User())
 
+    val errorMessage by viewModel.errorMessage
+
     var showDialog by remember { mutableStateOf(false) }
+    var showInputDialog by remember { mutableStateOf(false) }
 
     var bitmap: Bitmap? by remember { mutableStateOf(null) }
     val launcher = rememberLauncherForActivityResult(CropImageContract()) {
         bitmap = getCroppedImage(context.contentResolver, it)
+        if (bitmap != null) showInputDialog = true
     }
 
     if (status == ApiStatus.LOADING) {
@@ -165,7 +171,7 @@ fun MainScreen(
                 }
             }
         ) { padding ->
-            ScreenContent(Modifier.padding(padding), onNavigateToScreen)
+            ScreenContent(viewModel, Modifier.padding(padding), onNavigateToScreen)
             if (showDialog) {
                 ProfilDialog(
                     user = user,
@@ -174,14 +180,31 @@ fun MainScreen(
                     showDialog = false
                 }
             }
+
+            if (showInputDialog) {
+                InputDialog(
+                    bitmap = bitmap,
+                    onDismissRequest = {
+                        showInputDialog = false
+                    }) { namaTempat, biayaMasuk, kota, negara, alamat, rating, catatan ->
+                    viewModel.saveData(user.email, namaTempat, biayaMasuk, kota, negara, alamat, rating, catatan, bitmap!!)
+                    showInputDialog = false
+                }
+            }
+
+            if (errorMessage != null) {
+                Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
+                viewModel.clearMessage()
+            }
         }
     }
 }
 
 @Composable
 fun ScreenContent(
+    viewModel: MainViewModel,
     modifier: Modifier,
-    onNavigateToScreen: (String, String, Int, String, List<String>, String, String, String, String) -> Unit
+    onNavigateToScreen: (String, String, Int, String, List<String>?, String, String, String, String) -> Unit
 ) {
     val viewModel: MainViewModel = viewModel()
     val data by viewModel.data
@@ -228,8 +251,8 @@ fun ScreenContent(
                     },
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                     colors = TextFieldDefaults.colors(
-                        focusedContainerColor = AbuAbu,
-                        unfocusedContainerColor = AbuAbu,
+                        focusedContainerColor = WarnaUtama,
+                        unfocusedContainerColor = WarnaUtama,
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent
                     )
@@ -267,21 +290,21 @@ fun ScreenContent(
 @Composable
 fun ListItem(
     tempat: Tempat,
-    onNavigateToScreen: (String, String, Int, String, List<String>, String, String, String, String) -> Unit
+    onNavigateToScreen: (String, String, Int, String, List<String>?, String, String, String, String) -> Unit
 ) {
     Row(
         modifier = Modifier
             .padding(bottom = 30.dp)
             .clickable {
                 onNavigateToScreen(
-                    tempat.imageId,
-                    tempat.namaTempat,
+                    tempat.image_id,
+                    tempat.nama_tempat,
                     tempat.rating,
-                    tempat.biayaMasuk,
+                    tempat.biaya_masuk,
                     tempat.photos,
                     tempat.alamat,
                     tempat.kota,
-                    tempat.mapUrl,
+                    tempat.map_Url,
                     tempat.catatan
                 )
             },
@@ -296,11 +319,11 @@ fun ListItem(
         ) {
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
-                    .data(tempat.imageId)
+                    .data(tempat.image_id)
                     .crossfade(true)
                     .build(),
                 modifier = Modifier.size(130.dp),
-                contentDescription = tempat.namaTempat,
+                contentDescription = tempat.nama_tempat,
                 contentScale = ContentScale.Crop
             )
             Row(
@@ -334,7 +357,7 @@ fun ListItem(
             Text(
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Medium,
-                text = tempat.namaTempat
+                text = tempat.nama_tempat
             )
             Row(
                 modifier = Modifier.padding(top = 2.dp, bottom = 16.dp)
@@ -343,7 +366,7 @@ fun ListItem(
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
                     color = WarnaUtama,
-                    text = tempat.biayaMasuk
+                    text = tempat.biaya_masuk
                 )
                 Text(
                     fontSize = 16.sp,

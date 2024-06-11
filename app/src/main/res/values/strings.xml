@@ -9,4 +9,14 @@
     <string name="loading">"Loading   "</string>
     <string name="logout">Logout</string>
     <string name="tutup">Tutup</string>
+    <string name="batal">Batal</string>
+    <string name="simpan">Simpan</string>
+    <string name="nama_tempat">Nama Tempat</string>
+    <string name="catatan">Catatan</string>
+    <string name="rating">Rating</string>
+    <string name="map_url">Map Url</string>
+    <string name="alamat">Alamat</string>
+    <string name="negara">Negara</string>
+    <string name="kota">Kota</string>
+    <string name="biaya_masuk">Biaya Masuk</string>
 </resources>
