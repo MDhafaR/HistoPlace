@@ -27,7 +27,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,25 +48,34 @@ import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import org.d3if3068.assesment3.histoplace.R
+import org.d3if3068.assesment3.histoplace.model.Tempat
 import org.d3if3068.assesment3.histoplace.ui.theme.AbuGelap
 import org.d3if3068.assesment3.histoplace.ui.theme.HistoPlaceTheme
 import org.d3if3068.assesment3.histoplace.ui.theme.WarnaUtama
 import org.d3if3068.assesment3.histoplace.ui.widget.RatingItem
 
+const val KEY_ID_TEMPAT = "idTempat"
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailScreen(
-    imageId: String,
-    namaTempat: String,
-    rating: Int,
-    biayaMasuk: String,
-    photos: List<String>,
-    alamat: String,
-    kota: String,
-    mapUrl: String,
-    catatan: String,
+//    imageId: String,
+//    namaTempat: String,
+//    rating: Int,
+//    biayaMasuk: String,
+//    kota: String,
+//    catatan: String,
+    id: Int? = null,
     navController: NavHostController
 ) {
+    var showDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(true) {
+        if (id == null) return@LaunchedEffect
+//        val data = viewModel.getBook(id) ?: return@LaunchedEffect
+    }
+
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -86,47 +99,44 @@ fun DetailScreen(
     ) { padding ->
         DetailContent(
             modifier = Modifier.padding(padding),
-            imageId = imageId,
-            namaTempat = namaTempat,
-            rating = rating,
-            biayaMasuk = biayaMasuk,
-            photos = photos,
-            alamat = alamat,
-            kota = kota,
-            mapUrl = mapUrl,
-            catatan = catatan
+//            imageId = imageId,
+//            namaTempat = namaTempat,
+//            rating = rating,
+//            biayaMasuk = biayaMasuk,
+//            kota = kota,
+            id
         )
+        if (showDialog) {
+
+        }
     }
 }
 
 @Composable
 fun DetailContent(
     modifier: Modifier,
-    imageId: String,
-    namaTempat: String,
-    rating: Int,
-    biayaMasuk: String,
-    photos: List<String>,
-    alamat: String,
-    kota: String,
-    mapUrl: String,
-    catatan: String
+//    imageId: String,
+//    namaTempat: String,
+//    rating: Int,
+//    biayaMasuk: String,
+//    kota: String,
+    id: Int? = null
 ) {
     val context = LocalContext.current
-    val mapIntent = remember { Intent(Intent.ACTION_VIEW, Uri.parse(mapUrl)) }
+    val mapIntent = remember { Intent(Intent.ACTION_VIEW, Uri.parse("null")) }
 
     Box {
-        AsyncImage(
-            model = ImageRequest.Builder(LocalContext.current)
-                .data(imageId)
-                .crossfade(true)
-                .build(),
-            modifier = Modifier
-                .size(500.dp)
-                .offset(y = (-100).dp),
-            contentScale = ContentScale.Crop,
-            contentDescription = namaTempat
-        )
+//        AsyncImage(
+//            model = ImageRequest.Builder(LocalContext.current)
+//                .data(tempat.image_id)
+//                .crossfade(true)
+//                .build(),
+//            modifier = Modifier
+//                .fillMaxWidth()
+//                .offset(y = (-100).dp),
+//            contentScale = ContentScale.Crop,
+////            contentDescription = tempat.nama_tempat
+//        )
         LazyColumn {
             item {
                 Column(
@@ -150,21 +160,21 @@ fun DetailContent(
                             .fillMaxWidth()
                             .padding(bottom = 16.dp)
                     ) {
-                        Text(
-                            text = namaTempat, fontSize = 22.sp, fontWeight = FontWeight.Medium,
-                            color = Color.Black
-                        )
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(2.dp)
-                        ) {
-                            arrayOf(1, 2, 3, 4, 5).map { RatingItem(index = it, rating = rating) }
-                        }
+//                        Text(
+//                            text = tempat.nama_tempat, fontSize = 22.sp, fontWeight = FontWeight.Medium,
+//                            color = Color.Black
+//                        )
+//                        Row(
+//                            horizontalArrangement = Arrangement.spacedBy(2.dp)
+//                        ) {
+//                            arrayOf(1, 2, 3, 4, 5).map { RatingItem(index = it, rating = tempat.rating) }
+//                        }
                     }
                     Row(
                         modifier = Modifier.padding(bottom = 20.dp)
                     ) {
                         Text(text = "Entry Fee : ", color = Color.Black)
-                        Text(text = biayaMasuk, color = WarnaUtama, fontWeight = FontWeight.Medium)
+//                        Text(text = tempat.biaya_masuk, color = WarnaUtama, fontWeight = FontWeight.Medium)
                     }
                     Column(
                         modifier = Modifier.padding(bottom = 26.dp),
@@ -175,7 +185,7 @@ fun DetailContent(
                             color = Color.Black
                         )
                         LazyRow() {
-                            items(photos) {
+                            item {
                                 AsyncImage(
                                     modifier = Modifier
                                         .padding(end = 18.dp)
@@ -183,12 +193,15 @@ fun DetailContent(
                                         .width(110.dp)
                                         .height(88.dp),
                                     model = ImageRequest.Builder(LocalContext.current)
-                                        .data(it)
+                                        .data("")
                                         .crossfade(true)
                                         .build(),
                                     contentScale = ContentScale.Crop,
                                     contentDescription = "",
                                 )
+                            }
+                            item {
+
                             }
                         }
                     }
@@ -207,16 +220,16 @@ fun DetailContent(
                             modifier = Modifier.width(300.dp)
                         ) {
                             Text(
-                                text = alamat,
+                                text = "",
                                 fontSize = 14.sp,
                                 modifier = Modifier.padding(bottom = 5.dp),
                                 color = AbuGelap,
                             )
-                            Text(text = kota, fontSize = 14.sp, color = AbuGelap, fontWeight = FontWeight.Medium)
+//                            Text(text = tempat.kota, fontSize = 14.sp, color = AbuGelap, fontWeight = FontWeight.Medium)
                         }
-                        IconButton(modifier = Modifier.size(45.dp), onClick = { context.startActivities(
-                            arrayOf(mapIntent)
-                        ) }) {
+                        IconButton(modifier = Modifier.size(45.dp), onClick = {
+                            context.startActivities(arrayOf(mapIntent))
+                        }) {
                             Image(
                                 modifier = Modifier.size(40.dp),
                                 painter = painterResource(id = R.drawable.location),
@@ -235,7 +248,7 @@ fun DetailContent(
                             color = Color.Black
                         )
                         Text(
-                            text = catatan,
+                            text = "",
                             fontSize = 14.sp,
                             color = AbuGelap,
                         )
@@ -243,26 +256,5 @@ fun DetailContent(
                 }
             }
         }
-    }
-}
-
-@Preview
-@Composable
-fun PrevDetail() {
-    HistoPlaceTheme {
-        DetailScreen(
-            "",
-            "Taj Mahal",
-            3,
-            "Rp.5000",
-            listOf(
-
-            ),
-            "jakarta selatan",
-            "jogja",
-            "",
-            "tidak ada",
-            rememberNavController()
-        )
     }
 }

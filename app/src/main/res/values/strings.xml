@@ -19,4 +19,6 @@
     <string name="negara">Negara</string>
     <string name="kota">Kota</string>
     <string name="biaya_masuk">Biaya Masuk</string>
+    <string name="pilih_rating">Pilih Rating</string>
+    <string name="hapus">Hapus</string>
 </resources>

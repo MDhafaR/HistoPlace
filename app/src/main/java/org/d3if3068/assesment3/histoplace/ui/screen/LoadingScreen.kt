@@ -41,11 +41,11 @@ fun LoadingScreen() {
             verticalArrangement = Arrangement.Top,
             modifier = Modifier.padding(34.dp)
         ) {
-            Image(
-                modifier = Modifier.size(43.dp),
-                painter = painterResource(id = R.drawable.logo),
-                contentDescription = "Logo"
-            )
+//            Image(
+//                modifier = Modifier.size(43.dp),
+//                painter = painterResource(id = R.drawable.logo),
+//                contentDescription = "Logo"
+//            )
             Text(
                 modifier = Modifier.padding(bottom = 10.dp),
                 text = stringResource(R.string.judul_loading),

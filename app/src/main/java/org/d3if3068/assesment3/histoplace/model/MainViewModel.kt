@@ -26,18 +26,14 @@ class MainViewModel : ViewModel() {
     var errorMessage = mutableStateOf<String?>(null)
         private set
 
-    init {
-        retrieveData()
-    }
-
-    fun retrieveData() {
+    fun retrieveData(userId: String) {
         viewModelScope.launch(Dispatchers.IO) {
             status.value = ApiStatus.LOADING
             try {
-                val result = TempatApi.service.getTempat()
+                val result = TempatApi.service.getTempat(userId)
                 Log.d("MainViewModel", "Succsess: $result")
 
-                data.value = TempatApi.service.getTempat()
+                data.value = TempatApi.service.getTempat(userId)
                 status.value = ApiStatus.SUCCESS
             } catch (e: Exception) {
                 Log.d("MainViewModel", "Failur: ${e.message}")
@@ -48,40 +44,53 @@ class MainViewModel : ViewModel() {
 
     fun saveData(
         userId: String,
+        bitmap: Bitmap,
         namaTempat: String,
         biayaMasuk: String,
         kota: String,
         negara: String,
-        alamat: String,
         rating: Int,
-        catatan: String,
-        bitmap: Bitmap
     ) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val result = TempatApi.service.postTempat(
                     userId,
+                    bitmap.toMultipartBody(),
                     namaTempat.toRequestBody("text/plain".toMediaTypeOrNull()),
                     biayaMasuk.toRequestBody("text/plain".toMediaTypeOrNull()),
                     kota.toRequestBody("text/plain".toMediaTypeOrNull()),
                     negara.toRequestBody("text/plain".toMediaTypeOrNull()),
-                    alamat.toRequestBody("text/plain".toMediaTypeOrNull()),
-                    rating.toString().toRequestBody("text/plain".toMediaTypeOrNull()),
-                    catatan.toRequestBody("text/plain".toMediaTypeOrNull()),
-                    bitmap.toMultipartBody()
+                    rating.toString().toRequestBody("text/plain".toMediaTypeOrNull())
                 )
 
                 if (result.status == "success")
-                    retrieveData()
+                    retrieveData(userId)
                 else
                     throw Exception(result.message)
             } catch (e: Exception) {
                 Log.d("MainViewModel", "Failure2: ${e.message}")
-                errorMessage.value = "Error: ${e.message}"
+                errorMessage.value = "${e.message}"
             }
         }
     }
 
+    fun deleteData(userId: String, hewanId: String){
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val response = TempatApi.service.deleteData(userId, hewanId)
+                if (response.status == "success") {
+                    Log.d("MainViewModel", "Image deleted successfully: $hewanId")
+                    retrieveData(userId) // Refresh data after deletion
+                } else {
+                    Log.d("MainViewModel", "Failed to delete the image: ${response.message}")
+                    errorMessage.value = "Failed to delete the image: ${response.message}"
+                }
+            } catch (e: Exception) {
+                Log.d("MainViewModel", "Failure: ${e.message}")
+                errorMessage.value = "Error: ${e.message}"
+            }
+        }
+    }
 
     private fun Bitmap.toMultipartBody(): MultipartBody.Part {
         val stream = ByteArrayOutputStream()
@@ -90,7 +99,7 @@ class MainViewModel : ViewModel() {
         val requestBody = byteArray.toRequestBody(
             "image/jpg".toMediaTypeOrNull(), 0, byteArray.size)
         return MultipartBody.Part.createFormData(
-            "image", "image.jpg", requestBody)
+            "image_id", "image.jpg", requestBody)
     }
 
     fun clearMessage() { errorMessage.value = null }

@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -38,6 +39,7 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -85,17 +87,19 @@ import org.d3if3068.assesment3.histoplace.model.MainViewModel
 import org.d3if3068.assesment3.histoplace.model.Tempat
 import org.d3if3068.assesment3.histoplace.model.User
 import org.d3if3068.assesment3.histoplace.network.ApiStatus
+import org.d3if3068.assesment3.histoplace.network.TempatApi
 import org.d3if3068.assesment3.histoplace.network.UserDataStore
 import org.d3if3068.assesment3.histoplace.ui.theme.AbuAbu
 import org.d3if3068.assesment3.histoplace.ui.theme.HistoPlaceTheme
 import org.d3if3068.assesment3.histoplace.ui.theme.WarnaUtama
+import org.d3if3068.assesment3.histoplace.ui.widget.DisplayAlertDialog
 import org.d3if3068.assesment3.histoplace.ui.widget.InputDialog
 import org.d3if3068.assesment3.histoplace.ui.widget.ProfilDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
-    onNavigateToScreen: (String, String, Int, String, List<String>?, String, String, String, String) -> Unit,
+//    onNavigateToScreen: (String, String, Int, String, String, String) -> Unit,
     navController: NavHostController
 ) {
     val context = LocalContext.current
@@ -114,10 +118,6 @@ fun MainScreen(
         bitmap = getCroppedImage(context.contentResolver, it)
         if (bitmap != null) showInputDialog = true
     }
-
-    if (status == ApiStatus.LOADING) {
-        LoadingScreen()
-    } else {
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -171,7 +171,9 @@ fun MainScreen(
                 }
             }
         ) { padding ->
-            ScreenContent(viewModel, Modifier.padding(padding), onNavigateToScreen)
+            ScreenContent(viewModel,user.email, Modifier.padding(padding)
+//                onNavigateToScreen
+            )
             if (showDialog) {
                 ProfilDialog(
                     user = user,
@@ -186,8 +188,8 @@ fun MainScreen(
                     bitmap = bitmap,
                     onDismissRequest = {
                         showInputDialog = false
-                    }) { namaTempat, biayaMasuk, kota, negara, alamat, rating, catatan ->
-                    viewModel.saveData(user.email, namaTempat, biayaMasuk, kota, negara, alamat, rating, catatan, bitmap!!)
+                    }) { namaTempat, biayaMasuk, kota, negara, rating ->
+                    viewModel.saveData(user.email, bitmap!!, namaTempat, "Rp.$biayaMasuk", kota, negara, rating)
                     showInputDialog = false
                 }
             }
@@ -198,20 +200,25 @@ fun MainScreen(
             }
         }
     }
-}
+
 
 @Composable
 fun ScreenContent(
     viewModel: MainViewModel,
-    modifier: Modifier,
-    onNavigateToScreen: (String, String, Int, String, List<String>?, String, String, String, String) -> Unit
+    userId: String,
+    modifier: Modifier
+//    onNavigateToScreen: (String, String, Int, String, String, String) -> Unit
 ) {
-    val viewModel: MainViewModel = viewModel()
     val data by viewModel.data
     val status by viewModel.status.collectAsState()
 
+    LaunchedEffect(userId) {
+        viewModel.retrieveData(userId)
+    }
+
     when (status) {
         ApiStatus.LOADING -> {
+            LoadingScreen()
         }
 
         ApiStatus.SUCCESS -> {
@@ -258,11 +265,11 @@ fun ScreenContent(
                     )
                 )
                 LazyColumn(contentPadding = PaddingValues(bottom = 40.dp)) {
-                    items(data) {
-                        ListItem(
-                            onNavigateToScreen = onNavigateToScreen,
-                            tempat = it
-                        )
+                    items(data) { tempat ->
+                        ListItem(tempat = tempat, onDelete = { tempatId ->
+                            Log.d("ScreenContent", "Deleting data with ID: $tempatId")
+                            viewModel.deleteData(userId, tempatId)
+                        })
                     }
                 }
             }
@@ -276,7 +283,7 @@ fun ScreenContent(
             ) {
                 Text(text = stringResource(R.string.error))
                 Button(
-                    onClick = { viewModel.retrieveData() },
+                    onClick = { viewModel.retrieveData(userId) },
                     modifier = Modifier.padding(top = 16.dp),
                     contentPadding = PaddingValues(horizontal = 32.dp, vertical = 16.dp)
                 ) {
@@ -290,23 +297,35 @@ fun ScreenContent(
 @Composable
 fun ListItem(
     tempat: Tempat,
-    onNavigateToScreen: (String, String, Int, String, List<String>?, String, String, String, String) -> Unit
+    onDelete: (String) -> Unit
+//    onNavigateToScreen: (String, String, Int, String, String, String) -> Unit
 ) {
+    var showDialog by remember { mutableStateOf(false) }
+
+    DisplayAlertDialog(
+        openDialog = showDialog,
+        onDismissRequest = { showDialog = false },
+        onConfirmation = {
+            onDelete(tempat.id)
+            showDialog = false
+        }
+    )
     Row(
         modifier = Modifier
             .padding(bottom = 30.dp)
+            .fillMaxWidth()
             .clickable {
-                onNavigateToScreen(
-                    tempat.image_id,
-                    tempat.nama_tempat,
-                    tempat.rating,
-                    tempat.biaya_masuk,
-                    tempat.photos,
-                    tempat.alamat,
-                    tempat.kota,
-                    tempat.map_Url,
-                    tempat.catatan
-                )
+//                       onNavigateToScreen(
+//                           tempat
+//                       )
+//                onNavigateToScreen(
+//                    TempatApi.getTempatUrl(tempat.image_id),
+//                    tempat.nama_tempat,
+//                    tempat.rating,
+//                    tempat.biaya_masuk,
+//                    tempat.kota,
+//                    tempat.catatan!!
+//                )
             },
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -319,7 +338,7 @@ fun ListItem(
         ) {
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
-                    .data(tempat.image_id)
+                    .data(TempatApi.getTempatUrl(tempat.image_id))
                     .crossfade(true)
                     .build(),
                 modifier = Modifier.size(130.dp),
@@ -452,14 +471,14 @@ private fun getCroppedImage(
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun MainScreenPrev() {
-    HistoPlaceTheme {
-        MainScreen(
-            onNavigateToScreen = { imageId, namaTempat, rating, biayaMasuk, photos, alamat, kota, mapUrl, catatan ->
-            },
-            rememberNavController()
-        )
-    }
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun MainScreenPrev() {
+//    HistoPlaceTheme {
+//        MainScreen(
+//            onNavigateToScreen = { imageId, namaTempat, rating, biayaMasuk, kota, catatan->
+//            },
+//            rememberNavController()
+//        )
+//    }
+//}
