@@ -27,6 +27,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -118,88 +120,97 @@ fun MainScreen(
         bitmap = getCroppedImage(context.contentResolver, it)
         if (bitmap != null) showInputDialog = true
     }
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = {
-                        Icon(
-                            modifier = Modifier.size(50.dp),
-                            painter = painterResource(id = R.drawable.logo),
-                            contentDescription = "Logo",
-                            tint = WarnaUtama
-                        )
-                    },
-                    colors = TopAppBarDefaults.mediumTopAppBarColors(
-                        containerColor = Color.Transparent
-                    ),
-                    actions = {
-                        IconButton(onClick = {
-                            if (user.email.isEmpty()) {
-                                CoroutineScope(Dispatchers.IO).launch { signIn(context, dataStore) }
-                            } else {
-                                showDialog = true
-                            }
-                        }) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.account_circle),
-                                contentDescription = stringResource(R.string.profil),
-                                tint = WarnaUtama,
-                                modifier = Modifier.size(35.dp)
-                            )
-                        }
-                    }
-                )
-            },
-            floatingActionButton = {
-                IconButton(
-                    modifier = Modifier.size(57.dp),
-                    onClick = {
-                        val option = CropImageContractOptions(
-                            null, CropImageOptions(
-                                imageSourceIncludeGallery = false,
-                                imageSourceIncludeCamera = true,
-                                fixAspectRatio = true
-                            )
-                        )
-                        launcher.launch(option)
-                    }) {
-                    Image(
-                        modifier = Modifier.size(43.dp),
-                        painter = painterResource(id = R.drawable.fab),
-                        contentDescription = "fab"
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Icon(
+                        modifier = Modifier.size(50.dp),
+                        painter = painterResource(id = R.drawable.logo),
+                        contentDescription = "Logo",
+                        tint = WarnaUtama
                     )
+                },
+                colors = TopAppBarDefaults.mediumTopAppBarColors(
+                    containerColor = Color.Transparent
+                ),
+                actions = {
+                    IconButton(onClick = {
+                        if (user.email.isEmpty()) {
+                            CoroutineScope(Dispatchers.IO).launch { signIn(context, dataStore) }
+                        } else {
+                            showDialog = true
+                        }
+                    }) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.account_circle),
+                            contentDescription = stringResource(R.string.profil),
+                            tint = WarnaUtama,
+                            modifier = Modifier.size(35.dp)
+                        )
+                    }
                 }
-            }
-        ) { padding ->
-            ScreenContent(viewModel,user.email, Modifier.padding(padding)
-//                onNavigateToScreen
             )
-            if (showDialog) {
-                ProfilDialog(
-                    user = user,
-                    onDismissRequest = { showDialog = false }) {
-                    CoroutineScope(Dispatchers.IO).launch { signOut(context, dataStore) }
-                    showDialog = false
-                }
-            }
-
-            if (showInputDialog) {
-                InputDialog(
-                    bitmap = bitmap,
-                    onDismissRequest = {
-                        showInputDialog = false
-                    }) { namaTempat, biayaMasuk, kota, negara, rating ->
-                    viewModel.saveData(user.email, bitmap!!, namaTempat, "Rp.$biayaMasuk", kota, negara, rating)
-                    showInputDialog = false
-                }
-            }
-
-            if (errorMessage != null) {
-                Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
-                viewModel.clearMessage()
+        },
+        floatingActionButton = {
+            IconButton(
+                modifier = Modifier.size(57.dp),
+                onClick = {
+                    val option = CropImageContractOptions(
+                        null, CropImageOptions(
+                            imageSourceIncludeGallery = false,
+                            imageSourceIncludeCamera = true,
+                            fixAspectRatio = true
+                        )
+                    )
+                    launcher.launch(option)
+                }) {
+                Image(
+                    modifier = Modifier.size(43.dp),
+                    painter = painterResource(id = R.drawable.fab),
+                    contentDescription = "fab"
+                )
             }
         }
+    ) { padding ->
+        ScreenContent(
+            viewModel, user.email, Modifier.padding(padding)
+//                onNavigateToScreen
+        )
+        if (showDialog) {
+            ProfilDialog(
+                user = user,
+                onDismissRequest = { showDialog = false }) {
+                CoroutineScope(Dispatchers.IO).launch { signOut(context, dataStore) }
+                showDialog = false
+            }
+        }
+
+        if (showInputDialog) {
+            InputDialog(
+                bitmap = bitmap,
+                onDismissRequest = {
+                    showInputDialog = false
+                }) { namaTempat, biayaMasuk, kota, negara, rating ->
+                viewModel.saveData(
+                    user.email,
+                    bitmap!!,
+                    namaTempat,
+                    "Rp.$biayaMasuk",
+                    kota,
+                    negara,
+                    rating
+                )
+                showInputDialog = false
+            }
+        }
+
+        if (errorMessage != null) {
+            Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
+            viewModel.clearMessage()
+        }
     }
+}
 
 
 @Composable
@@ -327,77 +338,92 @@ fun ListItem(
 //                    tempat.catatan!!
 //                )
             },
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Box(
-            contentAlignment = Alignment.TopEnd,
-            modifier = Modifier
-                .clip(shape = RoundedCornerShape(17.dp))
-                .width(130.dp)
-                .height(110.dp)
-        ) {
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(TempatApi.getTempatUrl(tempat.image_id))
-                    .crossfade(true)
-                    .build(),
-                modifier = Modifier.size(130.dp),
-                contentDescription = tempat.nama_tempat,
-                contentScale = ContentScale.Crop
-            )
-            Row(
-                horizontalArrangement = Arrangement.Center,
+        Row {
+            Box(
+                contentAlignment = Alignment.TopEnd,
                 modifier = Modifier
-                    .clip(shape = RoundedCornerShape(bottomStart = 50.dp))
-                    .background(WarnaUtama)
-                    .padding(top = 4.dp)
-                    .height(30.dp)
-                    .width(70.dp)
+                    .clip(shape = RoundedCornerShape(17.dp))
+                    .width(130.dp)
+                    .height(110.dp)
             ) {
-                Image(
-                    modifier = Modifier
-                        .padding(end = 3.dp)
-                        .size(18.dp),
-                    painter = painterResource(id = R.drawable.star),
-                    contentDescription = "star",
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(TempatApi.getTempatUrl(tempat.image_id))
+                        .crossfade(true)
+                        .build(),
+                    modifier = Modifier.size(130.dp),
+                    contentDescription = tempat.nama_tempat,
+                    contentScale = ContentScale.Crop
                 )
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier
+                        .clip(shape = RoundedCornerShape(bottomStart = 50.dp))
+                        .background(WarnaUtama)
+                        .padding(top = 4.dp)
+                        .height(30.dp)
+                        .width(70.dp)
+                ) {
+                    Image(
+                        modifier = Modifier
+                            .padding(end = 3.dp)
+                            .size(18.dp),
+                        painter = painterResource(id = R.drawable.star),
+                        contentDescription = "star",
+                    )
+                    Text(
+                        modifier = Modifier.padding(top = 2.dp),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.White,
+                        text = "${tempat.rating}/5"
+                    )
+                }
+            }
+            Column(
+                modifier = Modifier.padding(start = 20.dp, end = 8.dp)
+            ) {
                 Text(
-                    modifier = Modifier.padding(top = 2.dp),
-                    fontSize = 13.sp,
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.Medium,
-                    color = Color.White,
-                    text = "${tempat.rating}/5"
+                    text = tempat.nama_tempat
+                )
+                Row(
+                    modifier = Modifier.padding(top = 2.dp, bottom = 16.dp)
+                ) {
+                    Text(
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = WarnaUtama,
+                        text = tempat.biaya_masuk
+                    )
+                    Text(
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Light,
+                        text = " / jam"
+                    )
+                }
+                Text(
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Light,
+                    text = "${tempat.kota}, ${tempat.negara}"
                 )
             }
         }
-        Column(
-            modifier = Modifier.padding(start = 20.dp, end = 8.dp)
-        ) {
-            Text(
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Medium,
-                text = tempat.nama_tempat
-            )
-            Row(
-                modifier = Modifier.padding(top = 2.dp, bottom = 16.dp)
-            ) {
-                Text(
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = WarnaUtama,
-                    text = tempat.biaya_masuk
-                )
-                Text(
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Light,
-                    text = " / jam"
+        if (tempat.mine == 1) {
+            IconButton(onClick = {
+                showDialog = true
+            }) {
+                Icon(
+                    modifier = Modifier.size(30.dp),
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "",
+                    tint = WarnaUtama
                 )
             }
-            Text(
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Light,
-                text = "${tempat.kota}, ${tempat.negara}"
-            )
         }
     }
 }
