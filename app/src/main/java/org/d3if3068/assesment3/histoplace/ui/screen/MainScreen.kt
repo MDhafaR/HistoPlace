@@ -77,6 +77,8 @@ import com.canhub.cropper.CropImageContract
 import com.canhub.cropper.CropImageContractOptions
 import com.canhub.cropper.CropImageOptions
 import com.canhub.cropper.CropImageView
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
@@ -222,6 +224,9 @@ fun ScreenContent(
 ) {
     val data by viewModel.data
     val status by viewModel.status.collectAsState()
+    val searchData by viewModel.searchData
+    val searchQuery by viewModel.searchQuery.collectAsState()
+    var refreshing by remember { mutableStateOf(false) }
 
     LaunchedEffect(userId) {
         viewModel.retrieveData(userId)
@@ -233,54 +238,65 @@ fun ScreenContent(
         }
 
         ApiStatus.SUCCESS -> {
-            Column(
-                modifier = modifier.padding(start = 16.dp, end = 16.dp)
+            SwipeRefresh(
+                state = rememberSwipeRefreshState(isRefreshing = refreshing),
+                onRefresh = {
+                    refreshing = true
+                    viewModel.retrieveData(userId)
+                    refreshing = false
+                },
             ) {
-                Text(
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    text = "Cari Tempat Special Mu"
-                )
-                TextField(
-                    shape = RoundedCornerShape(17.dp),
-                    leadingIcon = {
-                        Image(
-                            modifier = Modifier.size(20.dp),
-                            painter = painterResource(id = R.drawable.search),
-                            contentDescription = stringResource(R.string.search)
-                        )
-                    },
-                    value = "Search",
-                    onValueChange = {},
-                    modifier = Modifier
-                        .padding(top = 16.dp, bottom = 30.dp)
-                        .width(190.dp)
-                        .height(49.dp),
-                    textStyle = TextStyle(
+                Column(
+                    modifier = modifier.padding(start = 16.dp, end = 16.dp)
+                ) {
+                    Text(
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium,
-                        color = Color.White
-                    ),
-                    placeholder = {
-                        Text(
-                            text = stringResource(R.string.search),
-                            color = Color.White
-                        )
-                    },
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = WarnaUtama,
-                        unfocusedContainerColor = WarnaUtama,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent
+                        text = "Cari Tempat Special Mu"
                     )
-                )
-                LazyColumn(contentPadding = PaddingValues(bottom = 40.dp)) {
-                    items(data) { tempat ->
-                        ListItem(tempat = tempat, onDelete = { tempatId ->
-                            Log.d("ScreenContent", "Deleting data with ID: $tempatId")
-                            viewModel.deleteData(userId, tempatId)
-                        })
+                    TextField(
+                        shape = RoundedCornerShape(17.dp),
+                        leadingIcon = {
+                            Image(
+                                modifier = Modifier.size(20.dp),
+                                painter = painterResource(id = R.drawable.search),
+                                contentDescription = stringResource(R.string.search)
+                            )
+                        },
+                        value = searchQuery,
+                        onValueChange = {query ->
+                            viewModel.updateSearchQuery(query)
+                        },
+                        modifier = Modifier
+                            .padding(top = 16.dp, bottom = 2.dp)
+                            .width(190.dp)
+                            .height(49.dp),
+                        textStyle = TextStyle(
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color.White
+                        ),
+                        placeholder = {
+                            Text(
+                                text = stringResource(R.string.search),
+                                color = Color.White
+                            )
+                        },
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = WarnaUtama,
+                            unfocusedContainerColor = WarnaUtama,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent
+                        )
+                    )
+                    LazyColumn(contentPadding = PaddingValues(top = 28.dp, bottom = 40.dp)) {
+                        items(if (searchQuery.isEmpty()) data else searchData) { tempat ->
+                            ListItem(tempat = tempat, onDelete = { tempatId ->
+                                Log.d("ScreenContent", "Deleting data with ID: $tempatId")
+                                viewModel.deleteData(userId, tempatId)
+                            })
+                        }
                     }
                 }
             }

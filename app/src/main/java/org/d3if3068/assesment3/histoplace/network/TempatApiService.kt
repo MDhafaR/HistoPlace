@@ -2,6 +2,7 @@ package org.d3if3068.assesment3.histoplace.network
 
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import kotlinx.coroutines.flow.Flow
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
@@ -19,7 +20,7 @@ import retrofit2.http.Part
 import retrofit2.http.Query
 import java.lang.reflect.Type
 
-private const val BASE_URL = "https://ac85-114-79-49-187.ngrok-free.app/"
+private const val BASE_URL = "https://fd70-103-233-100-227.ngrok-free.app/"
 
 private val moshi = Moshi.Builder()
     .add(KotlinJsonAdapterFactory())
@@ -35,6 +36,9 @@ interface TempatApiService {
     suspend fun getTempat(
         @Header("Authorization") userId: String
     ): List<Tempat>
+
+    @GET("belajarRestApiWeb/files/dhafa/TempatSearch.php")
+    suspend fun searchBooksByTitle(@Query("search") searchQuery: String): List<Tempat>
 
     @Multipart
     @POST("belajarRestApiWeb/files/dhafa/AddData.php")

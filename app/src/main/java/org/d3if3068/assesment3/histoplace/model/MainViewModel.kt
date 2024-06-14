@@ -6,7 +6,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -25,6 +31,12 @@ class MainViewModel : ViewModel() {
 
     var errorMessage = mutableStateOf<String?>(null)
         private set
+
+    var searchData = mutableStateOf(emptyList<Tempat>())
+        private set
+
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery
 
     fun retrieveData(userId: String) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -90,6 +102,22 @@ class MainViewModel : ViewModel() {
                 errorMessage.value = "Error: ${e.message}"
             }
         }
+    }
+
+    fun searchBooksByTitle(query: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val result = TempatApi.service.searchBooksByTitle(query)
+                searchData.value = result
+            } catch (e: Exception) {
+                Log.d("MainViewModel", "Search Failure: ${e.message}")
+            }
+        }
+    }
+
+    fun updateSearchQuery(query: String) {
+        _searchQuery.value = query
+        searchBooksByTitle(query)
     }
 
     private fun Bitmap.toMultipartBody(): MultipartBody.Part {
