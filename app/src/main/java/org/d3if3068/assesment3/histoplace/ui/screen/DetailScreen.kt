@@ -43,38 +43,53 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.squareup.moshi.JsonAdapter
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.d3if3068.assesment3.histoplace.R
+import org.d3if3068.assesment3.histoplace.model.MainViewModel
 import org.d3if3068.assesment3.histoplace.model.Tempat
 import org.d3if3068.assesment3.histoplace.ui.theme.AbuGelap
 import org.d3if3068.assesment3.histoplace.ui.theme.HistoPlaceTheme
 import org.d3if3068.assesment3.histoplace.ui.theme.WarnaUtama
+import org.d3if3068.assesment3.histoplace.ui.widget.DisplayAlertDialog
+import org.d3if3068.assesment3.histoplace.ui.widget.InputDialog
+import org.d3if3068.assesment3.histoplace.ui.widget.NextInputDialog
+import org.d3if3068.assesment3.histoplace.ui.widget.ProfilDialog
 import org.d3if3068.assesment3.histoplace.ui.widget.RatingItem
-
-const val KEY_ID_TEMPAT = "idTempat"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailScreen(
-//    imageId: String,
-//    namaTempat: String,
-//    rating: Int,
-//    biayaMasuk: String,
-//    kota: String,
-//    catatan: String,
-    id: Int? = null,
-    navController: NavHostController
+    navController: NavHostController,
+    tempat: Tempat,
+    userId: String
 ) {
     var showDialog by remember { mutableStateOf(false) }
+    val viewModel: MainViewModel = viewModel()
 
-    LaunchedEffect(true) {
-        if (id == null) return@LaunchedEffect
-//        val data = viewModel.getBook(id) ?: return@LaunchedEffect
+    if (tempat.catatan == null) {
+        showDialog = true
     }
 
+    if (showDialog) {
+        NextInputDialog(
+            onDismissRequest = {
+                showDialog = false
+            }
+        ) { alamat, mapUrl, catatan ->
+            viewModel.saveDetail(alamat, mapUrl, catatan, tempat.id, userId) // Panggil saveDetail dengan id dan userId
+            showDialog = false
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -99,12 +114,7 @@ fun DetailScreen(
     ) { padding ->
         DetailContent(
             modifier = Modifier.padding(padding),
-//            imageId = imageId,
-//            namaTempat = namaTempat,
-//            rating = rating,
-//            biayaMasuk = biayaMasuk,
-//            kota = kota,
-            id
+            tempat
         )
         if (showDialog) {
 
@@ -115,28 +125,23 @@ fun DetailScreen(
 @Composable
 fun DetailContent(
     modifier: Modifier,
-//    imageId: String,
-//    namaTempat: String,
-//    rating: Int,
-//    biayaMasuk: String,
-//    kota: String,
-    id: Int? = null
+    tempat: Tempat
 ) {
     val context = LocalContext.current
     val mapIntent = remember { Intent(Intent.ACTION_VIEW, Uri.parse("null")) }
 
     Box {
-//        AsyncImage(
-//            model = ImageRequest.Builder(LocalContext.current)
-//                .data(tempat.image_id)
-//                .crossfade(true)
-//                .build(),
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .offset(y = (-100).dp),
-//            contentScale = ContentScale.Crop,
-////            contentDescription = tempat.nama_tempat
-//        )
+        AsyncImage(
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(tempat.image_id)
+                .crossfade(true)
+                .build(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .offset(y = (-100).dp),
+            contentScale = ContentScale.Crop,
+            contentDescription = tempat.nama_tempat
+        )
         LazyColumn {
             item {
                 Column(
@@ -160,21 +165,21 @@ fun DetailContent(
                             .fillMaxWidth()
                             .padding(bottom = 16.dp)
                     ) {
-//                        Text(
-//                            text = tempat.nama_tempat, fontSize = 22.sp, fontWeight = FontWeight.Medium,
-//                            color = Color.Black
-//                        )
-//                        Row(
-//                            horizontalArrangement = Arrangement.spacedBy(2.dp)
-//                        ) {
-//                            arrayOf(1, 2, 3, 4, 5).map { RatingItem(index = it, rating = tempat.rating) }
-//                        }
+                        Text(
+                            text = tempat.nama_tempat, fontSize = 22.sp, fontWeight = FontWeight.Medium,
+                            color = Color.Black
+                        )
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+                            arrayOf(1, 2, 3, 4, 5).map { RatingItem(index = it, rating = tempat.rating) }
+                        }
                     }
                     Row(
                         modifier = Modifier.padding(bottom = 20.dp)
                     ) {
                         Text(text = "Entry Fee : ", color = Color.Black)
-//                        Text(text = tempat.biaya_masuk, color = WarnaUtama, fontWeight = FontWeight.Medium)
+                        Text(text = tempat.biaya_masuk, color = WarnaUtama, fontWeight = FontWeight.Medium)
                     }
                     Column(
                         modifier = Modifier.padding(bottom = 26.dp),
@@ -225,7 +230,7 @@ fun DetailContent(
                                 modifier = Modifier.padding(bottom = 5.dp),
                                 color = AbuGelap,
                             )
-//                            Text(text = tempat.kota, fontSize = 14.sp, color = AbuGelap, fontWeight = FontWeight.Medium)
+                            Text(text = tempat.kota, fontSize = 14.sp, color = AbuGelap, fontWeight = FontWeight.Medium)
                         }
                         IconButton(modifier = Modifier.size(45.dp), onClick = {
                             context.startActivities(arrayOf(mapIntent))

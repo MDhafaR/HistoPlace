@@ -12,10 +12,13 @@ import retrofit2.Converter
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import retrofit2.http.DELETE
+import retrofit2.http.Field
+import retrofit2.http.FormUrlEncoded
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Multipart
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Part
 import retrofit2.http.Query
 import java.lang.reflect.Type
@@ -50,6 +53,16 @@ interface TempatApiService {
         @Part("kota") kota: RequestBody,
         @Part("negara") negara: RequestBody,
         @Part("rating") rating: RequestBody
+    ): OpStatus
+
+    @FormUrlEncoded
+    @PUT("belajarRestApiWeb/files/dhafa/Detail.php")
+    suspend fun updateDetail(
+        @Field("alamat") alamat: RequestBody,
+        @Field("map_url") map_url: RequestBody,
+        @Field("catatan") catatan: RequestBody,
+        @Field("id") id: RequestBody,
+        @Header("Authorization") userId: String
     ): OpStatus
 
     @DELETE("belajarRestApiWeb/files/dhafa/DeleteData.php")

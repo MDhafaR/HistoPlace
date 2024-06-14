@@ -4,6 +4,7 @@ import android.content.ContentResolver
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.ImageDecoder
+import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
 import android.util.Log
@@ -82,6 +83,9 @@ import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
+import com.squareup.moshi.JsonAdapter
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -90,6 +94,7 @@ import org.d3if3068.assesment3.histoplace.R
 import org.d3if3068.assesment3.histoplace.model.MainViewModel
 import org.d3if3068.assesment3.histoplace.model.Tempat
 import org.d3if3068.assesment3.histoplace.model.User
+import org.d3if3068.assesment3.histoplace.navigation.Screen
 import org.d3if3068.assesment3.histoplace.network.ApiStatus
 import org.d3if3068.assesment3.histoplace.network.TempatApi
 import org.d3if3068.assesment3.histoplace.network.UserDataStore
@@ -176,7 +181,7 @@ fun MainScreen(
         }
     ) { padding ->
         ScreenContent(
-            viewModel, user.email, Modifier.padding(padding)
+            viewModel, user.email, Modifier.padding(padding), navController
 //                onNavigateToScreen
         )
         if (showDialog) {
@@ -219,7 +224,8 @@ fun MainScreen(
 fun ScreenContent(
     viewModel: MainViewModel,
     userId: String,
-    modifier: Modifier
+    modifier: Modifier,
+    navController: NavHostController
 //    onNavigateToScreen: (String, String, Int, String, String, String) -> Unit
 ) {
     val data by viewModel.data
@@ -295,7 +301,7 @@ fun ScreenContent(
                             ListItem(tempat = tempat, onDelete = { tempatId ->
                                 Log.d("ScreenContent", "Deleting data with ID: $tempatId")
                                 viewModel.deleteData(userId, tempatId)
-                            })
+                            }, navController, userId)
                         }
                     }
                 }
@@ -324,10 +330,14 @@ fun ScreenContent(
 @Composable
 fun ListItem(
     tempat: Tempat,
-    onDelete: (String) -> Unit
-//    onNavigateToScreen: (String, String, Int, String, String, String) -> Unit
+    onDelete: (String) -> Unit,
+    navController: NavHostController,
+    userId: String
 ) {
     var showDialog by remember { mutableStateOf(false) }
+    val moshi: Moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
+    val jsonAdapter: JsonAdapter<Tempat> = moshi.adapter(Tempat::class.java)
+    val tempatJson = Uri.encode(jsonAdapter.toJson(tempat))
 
     DisplayAlertDialog(
         openDialog = showDialog,
@@ -342,17 +352,13 @@ fun ListItem(
             .padding(bottom = 30.dp)
             .fillMaxWidth()
             .clickable {
-//                       onNavigateToScreen(
-//                           tempat
-//                       )
-//                onNavigateToScreen(
-//                    TempatApi.getTempatUrl(tempat.image_id),
-//                    tempat.nama_tempat,
-//                    tempat.rating,
-//                    tempat.biaya_masuk,
-//                    tempat.kota,
-//                    tempat.catatan!!
-//                )
+                       // ini yang akan dikirim
+                try {
+                    Log.d("Navigation", "Navigating to DetailScreen with data: $tempatJson")
+                    navController.navigate(Screen.Detail.createRoute(tempatJson, userId))
+                } catch (e: Exception) {
+                    Log.e("Navigation", "Error navigating to DetailScreen", e)
+                }
             },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween

@@ -1,6 +1,7 @@
 package org.d3if3068.assesment3.histoplace.navigation
 
 import android.net.Uri
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -8,12 +9,18 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.squareup.moshi.JsonAdapter
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import org.d3if3068.assesment3.histoplace.model.Tempat
 import org.d3if3068.assesment3.histoplace.ui.screen.DetailScreen
-import org.d3if3068.assesment3.histoplace.ui.screen.KEY_ID_TEMPAT
 import org.d3if3068.assesment3.histoplace.ui.screen.MainScreen
 
 @Composable
 fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
+    val moshi: Moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
+    val jsonAdapter: JsonAdapter<Tempat> = moshi.adapter(Tempat::class.java)
+
     NavHost(
         navController = navController,
         startDestination = Screen.Home.route
@@ -22,60 +29,29 @@ fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
             MainScreen(navController)
         }
 
-        // ini adalah navigation ke page Detail dengan menggunakan id dari mainScreen
         composable(
             route = Screen.Detail.route,
             arguments = listOf(
-                navArgument(KEY_ID_TEMPAT) { type = NavType.IntType },
+                navArgument("tempatJson") { type = NavType.StringType },
+                navArgument("userId") { type = NavType.StringType } // Tambahkan userId sebagai argument
             )
-        ) { navBackStackEntry ->
-            val id = navBackStackEntry.arguments?.getInt(KEY_ID_TEMPAT)
-            DetailScreen(id, navController)
+        ) { backStackEntry ->
+            val tempatJson = backStackEntry.arguments?.getString("tempatJson")
+            val userId = backStackEntry.arguments?.getString("userId") // Ambil userId dari arguments
+            if (tempatJson != null && userId != null) {
+                val tempat = jsonAdapter.fromJson(Uri.decode(tempatJson))
+                if (tempat != null) {
+                    DetailScreen(navController, tempat, userId) // Kirim userId ke DetailScreen
+                } else {
+                    Log.e("SetupNavGraph", "Failed to parse Tempat from JSON: $tempatJson")
+                }
+            } else {
+                Log.e("SetupNavGraph", "tempatJson or userId is null")
+            }
         }
-//        composable(route = "MainScreen") {
-//            MainScreen(
-//                onNavigateToScreen = { imageId, namaTempat, rating, biayaMasuk, kota, catatan ->
-//                    val encodedImageId = Uri.encode(imageId)
-//                    val encodedNamaTempat = Uri.encode(namaTempat)
-//                    val encodedBiayaMasuk = Uri.encode(biayaMasuk)
-//                    val encodedKota = Uri.encode(kota)
-//                    val encodedCatatan = Uri.encode(catatan)
-//
-//                    navController.navigate(
-//                        "DetailScreen/$encodedImageId/$encodedNamaTempat/$rating/$encodedBiayaMasuk/$encodedKota/$encodedCatatan"
-//                    )
-//                },
-//                navController = navController
-//            )
-//        }
-//
-//        composable(
-//            route = "DetailScreen/{imageId}/{namaTempat}/{rating}/{biayaMasuk}/{kota}/{catatan}",
-//            arguments = listOf(
-//                navArgument("imageId") { type = NavType.StringType },
-//                navArgument("namaTempat") { type = NavType.StringType },
-//                navArgument("rating") { type = NavType.IntType },
-//                navArgument("biayaMasuk") { type = NavType.StringType },
-//                navArgument("kota") { type = NavType.StringType },
-//                navArgument("catatan") { type = NavType.StringType },
-//            )
-//        ) { backStackEntry ->
-//            val imageId = backStackEntry.arguments?.getString("imageId") ?: ""
-//            val namaTempat = backStackEntry.arguments?.getString("namaTempat") ?: ""
-//            val rating = backStackEntry.arguments?.getInt("rating") ?: 0
-//            val biayaMasuk = backStackEntry.arguments?.getString("biayaMasuk") ?: ""
-//            val kota = backStackEntry.arguments?.getString("kota") ?: ""
-//            val catatan = backStackEntry.arguments?.getString("catatan") ?: ""
-//
-//            DetailScreen(
-//                imageId = imageId,
-//                namaTempat = namaTempat,
-//                rating = rating,
-//                biayaMasuk = biayaMasuk,
-//                kota = kota,
-//                catatan = catatan,
-//                navController
-//            )
-//        }
+
     }
 }
+
+
+
