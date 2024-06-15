@@ -1,11 +1,18 @@
 package org.d3if3068.assesment3.histoplace.ui.screen
 
+import android.content.ContentResolver
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.ImageDecoder
 import android.net.Uri
+import android.os.Build
+import android.provider.MediaStore
 import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,6 +36,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,6 +57,10 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.canhub.cropper.CropImageContract
+import com.canhub.cropper.CropImageContractOptions
+import com.canhub.cropper.CropImageOptions
+import com.canhub.cropper.CropImageView
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
@@ -57,13 +69,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.d3if3068.assesment3.histoplace.R
 import org.d3if3068.assesment3.histoplace.model.MainViewModel
+import org.d3if3068.assesment3.histoplace.model.Photos
 import org.d3if3068.assesment3.histoplace.model.Tempat
+import org.d3if3068.assesment3.histoplace.network.ApiStatus
 import org.d3if3068.assesment3.histoplace.network.TempatApi
 import org.d3if3068.assesment3.histoplace.ui.theme.AbuGelap
 import org.d3if3068.assesment3.histoplace.ui.theme.HistoPlaceTheme
 import org.d3if3068.assesment3.histoplace.ui.theme.WarnaUtama
 import org.d3if3068.assesment3.histoplace.ui.widget.DisplayAlertDialog
 import org.d3if3068.assesment3.histoplace.ui.widget.InputDialog
+import org.d3if3068.assesment3.histoplace.ui.widget.LoadingAnimation
 import org.d3if3068.assesment3.histoplace.ui.widget.NextInputDialog
 import org.d3if3068.assesment3.histoplace.ui.widget.ProfilDialog
 import org.d3if3068.assesment3.histoplace.ui.widget.RatingItem
@@ -77,20 +92,6 @@ fun DetailScreen(
     viewModel: MainViewModel
 ) {
     var showDialog by remember { mutableStateOf(true) }
-
-    if (tempat.catatan == null) {
-        if (showDialog) {
-            NextInputDialog(
-                onDismissRequest = {
-                    showDialog = false
-                    navController.popBackStack()
-                },
-            ) { alamat, catatan ->
-                viewModel.saveDetail(alamat, catatan, tempat.id, userId)
-                showDialog = false
-            }
-        }
-    }
 
     Scaffold(
         topBar = {
@@ -115,10 +116,22 @@ fun DetailScreen(
     ) { padding ->
         DetailContent(
             modifier = Modifier.padding(padding),
-            tempat
+            tempat,
+            viewModel
         )
-        if (showDialog) {
-
+        if (tempat.catatan == null) {
+            if (showDialog) {
+                NextInputDialog(
+                    onDismissRequest = {
+                        showDialog = false
+                        navController.popBackStack()
+                    },
+                ) { alamat, catatan ->
+                    viewModel.saveDetail(alamat, catatan, tempat.id, userId)
+                    showDialog = false
+                    navController.popBackStack()
+                }
+            }
         }
     }
 }
@@ -126,11 +139,25 @@ fun DetailScreen(
 @Composable
 fun DetailContent(
     modifier: Modifier,
-    tempat: Tempat
+    tempat: Tempat,
+    viewModel: MainViewModel
 ) {
     val context = LocalContext.current
     val encodeMap = tempat.nama_tempat.replace(" ", "+")
-    val mapIntent = remember { Intent(Intent.ACTION_VIEW, Uri.parse("https://maps.google.com/?q=$encodeMap")) }
+    val mapIntent =
+        remember { Intent(Intent.ACTION_VIEW, Uri.parse("https://maps.google.com/?q=$encodeMap")) }
+    val data by viewModel.dataPhotos
+    val status by viewModel.statusPhotos.collectAsState()
+
+    var bitmap: Bitmap? by remember { mutableStateOf(null) }
+    val launcher = rememberLauncherForActivityResult(CropImageContract()) {
+        bitmap = getCroppedImage(context.contentResolver, it)
+        viewModel.savePhotos(bitmap!!, tempat.id)
+    }
+
+    LaunchedEffect(tempat.id) {
+        viewModel.retrievePhotos(tempat.id)
+    }
 
     Box {
         AsyncImage(
@@ -188,7 +215,11 @@ fun DetailContent(
                         modifier = Modifier.padding(bottom = 20.dp)
                     ) {
                         Text(text = "Entry Fee : ", color = Color.Black)
-                        Text(text = tempat.biaya_masuk, color = WarnaUtama, fontWeight = FontWeight.Medium)
+                        Text(
+                            text = tempat.biaya_masuk,
+                            color = WarnaUtama,
+                            fontWeight = FontWeight.Medium
+                        )
                     }
                     Column(
                         modifier = Modifier.padding(bottom = 26.dp),
@@ -198,26 +229,50 @@ fun DetailContent(
                             text = "Photos",
                             color = Color.Black
                         )
-                        LazyRow() {
+                        LazyRow {
+                            items(data) { photo ->
+                                if (status == ApiStatus.LOADING) {
+                                    LoadingAnimation()
+                                } else {
+                                    AsyncImage(
+                                        model = ImageRequest.Builder(LocalContext.current)
+                                            .data(TempatApi.getPhotosUrl(photo.photoUrl))
+                                            .crossfade(true)
+                                            .build(),
+                                        contentDescription = "",
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier
+                                            .padding(end = 18.dp)
+                                            .clip(RoundedCornerShape(17.dp))
+                                            .width(110.dp)
+                                            .height(88.dp)
+                                    )
+                                }
+                            }
+
                             item {
-                                AsyncImage(
+                                Image(
+                                    painter = painterResource(id = R.drawable.tambah),
+                                    contentDescription = "",
                                     modifier = Modifier
                                         .padding(end = 18.dp)
-                                        .clip(shape = RoundedCornerShape(17.dp))
+                                        .clip(RoundedCornerShape(17.dp))
+                                        .clickable {
+                                            val option = CropImageContractOptions(
+                                                null, CropImageOptions(
+                                                    imageSourceIncludeGallery = false,
+                                                    imageSourceIncludeCamera = true,
+                                                    fixAspectRatio = true
+                                                )
+                                            )
+                                            launcher.launch(option)
+                                        }
                                         .width(110.dp)
-                                        .height(88.dp),
-                                    model = ImageRequest.Builder(LocalContext.current)
-                                        .data("")
-                                        .crossfade(true)
-                                        .build(),
-                                    contentScale = ContentScale.Crop,
-                                    contentDescription = "",
+                                        .height(88.dp)
                                 )
                             }
-                            item {
-
-                            }
                         }
+
                     }
                     Text(
                         modifier = Modifier.padding(bottom = 6.dp),
@@ -258,6 +313,7 @@ fun DetailContent(
                     }
                     Column(
                         modifier = Modifier
+                            .fillMaxWidth()
                             .border(1.dp, Color.Black, RoundedCornerShape(2.dp))
                             .padding(10.dp)
                     ) {
@@ -275,5 +331,24 @@ fun DetailContent(
                 }
             }
         }
+    }
+}
+
+private fun getCroppedImage(
+    resolver: ContentResolver,
+    result: CropImageView.CropResult
+): Bitmap? {
+    if (!result.isSuccessful) {
+        Log.e("IMAGE", "Error: ${result.error}")
+        return null
+    }
+
+    var uri = result.uriContent ?: return null
+
+    return if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+        MediaStore.Images.Media.getBitmap(resolver, uri)
+    } else {
+        val source = ImageDecoder.createSource(resolver, uri)
+        ImageDecoder.decodeBitmap(source)
     }
 }

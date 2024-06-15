@@ -86,6 +86,35 @@ fun NextInputDialog(
                         modifier = Modifier.padding(8.dp)
                     )
                 }
+
+                item {
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        OutlinedButton(
+                            onClick = { onDismissRequest() },
+                            modifier = Modifier.padding(8.dp)
+                        ) {
+                            Text(text = stringResource(R.string.batal))
+                        }
+                        OutlinedButton(
+                            onClick = {
+                                onConfirmation(
+                                    alamat,
+                                    catatan
+                                )
+                            },
+                            enabled = alamat.isNotEmpty() && catatan.isNotEmpty(),
+                            modifier = Modifier.padding(8.dp)
+                        ) {
+                            Text(text = stringResource(R.string.simpan))
+                        }
+                    }
+                }
             }
         }
     }

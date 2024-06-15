@@ -515,15 +515,3 @@ private fun getCroppedImage(
         ImageDecoder.decodeBitmap(source)
     }
 }
-
-//@Preview(showBackground = true)
-//@Composable
-//fun MainScreenPrev() {
-//    HistoPlaceTheme {
-//        MainScreen(
-//            onNavigateToScreen = { imageId, namaTempat, rating, biayaMasuk, kota, catatan->
-//            },
-//            rememberNavController()
-//        )
-//    }
-//}

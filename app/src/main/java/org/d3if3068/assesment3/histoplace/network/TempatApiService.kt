@@ -2,28 +2,22 @@ package org.d3if3068.assesment3.histoplace.network
 
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
-import kotlinx.coroutines.flow.Flow
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
-import okhttp3.ResponseBody
 import org.d3if3068.assesment3.histoplace.model.OpStatus
+import org.d3if3068.assesment3.histoplace.model.Photos
 import org.d3if3068.assesment3.histoplace.model.Tempat
-import retrofit2.Converter
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import retrofit2.http.DELETE
-import retrofit2.http.Field
-import retrofit2.http.FormUrlEncoded
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Multipart
 import retrofit2.http.POST
-import retrofit2.http.PUT
 import retrofit2.http.Part
 import retrofit2.http.Query
-import java.lang.reflect.Type
 
-private const val BASE_URL = "https://af84-114-79-49-118.ngrok-free.app/"
+private const val BASE_URL = "https://amazed-possum-heartily.ngrok-free.app/"
 
 private val moshi = Moshi.Builder()
     .add(KotlinJsonAdapterFactory())
@@ -55,6 +49,18 @@ interface TempatApiService {
         @Part("rating") rating: RequestBody
     ): OpStatus
 
+    @GET("belajarRestApiWeb/files/dhafa/photos.php")
+    suspend fun getPhots(
+        @Query("tempat_id") id: String,
+    ): List<Photos>
+
+    @Multipart
+    @POST("belajarRestApiWeb/files/dhafa/AddPhotos.php")
+    suspend fun postPhotos(
+        @Part photoUrl: MultipartBody.Part,
+        @Part("tempat_id") tempat_id: RequestBody
+    ): OpStatus
+
     @Multipart
     @POST("belajarRestApiWeb/files/dhafa/Detail.php")
     suspend fun updateDetail(
@@ -79,6 +85,11 @@ object TempatApi {
     fun getTempatUrl(imageId: String): String {
         val encodedImageId = imageId.replace("&", "%26")
         return "${BASE_URL}belajarRestApiWeb/files/dhafa/image.php?image_id=$encodedImageId"
+    }
+
+    fun getPhotosUrl(imageId: String): String {
+        val encodedImageId = imageId.replace("&", "%26")
+        return "${BASE_URL}belajarRestApiWeb/files/dhafa/imagePhotos.php?photoUrl=$encodedImageId"
     }
 }
 

@@ -29,6 +29,12 @@ class MainViewModel : ViewModel() {
     var status = MutableStateFlow(ApiStatus.LOADING)
         private set
 
+    var dataPhotos = mutableStateOf(emptyList<Photos>())
+        private set
+
+    var statusPhotos = MutableStateFlow(ApiStatus.LOADING)
+        private set
+
     var errorMessage = mutableStateOf<String?>(null)
         private set
 
@@ -53,6 +59,23 @@ class MainViewModel : ViewModel() {
             }
         }
     }
+
+    fun retrievePhotos(tempatId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            statusPhotos.value = ApiStatus.LOADING
+            try {
+                val result = TempatApi.service.getPhots(tempatId)
+                Log.d("MainViewModel", "Success: $result")
+
+                dataPhotos.value = TempatApi.service.getPhots(tempatId)
+                statusPhotos.value = ApiStatus.SUCCESS
+            } catch (e: Exception) {
+                Log.d("MainViewModel", "Failure: ${e.message}")
+                statusPhotos.value = ApiStatus.FAILED
+            }
+        }
+    }
+
 
     fun saveData(
         userId: String,
@@ -81,6 +104,28 @@ class MainViewModel : ViewModel() {
                     throw Exception(result.message)
             } catch (e: Exception) {
                 Log.d("MainViewModel", "Failure2: ${e.message}")
+                errorMessage.value = "${e.message}"
+            }
+        }
+    }
+
+    fun savePhotos(
+        bitmap: Bitmap,
+        id: String
+    ) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val result = TempatApi.service.postPhotos(
+                    bitmap.toMultipartBody(),
+                    id.toRequestBody("text/plain".toMediaTypeOrNull())
+                )
+
+                if (result.status == "success")
+                    retrievePhotos(id)
+                else
+                    throw Exception(result.message)
+            } catch (e: Exception) {
+                Log.d("MainViewModel", "Failure4: ${e.message}")
                 errorMessage.value = "${e.message}"
             }
         }
