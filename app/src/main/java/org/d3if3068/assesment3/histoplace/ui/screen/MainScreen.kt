@@ -31,7 +31,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -59,7 +58,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.credentials.ClearCredentialStateRequest
@@ -69,9 +67,7 @@ import androidx.credentials.GetCredentialRequest
 import androidx.credentials.GetCredentialResponse
 import androidx.credentials.exceptions.ClearCredentialException
 import androidx.credentials.exceptions.GetCredentialException
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.canhub.cropper.CropImageContract
@@ -98,8 +94,6 @@ import org.d3if3068.assesment3.histoplace.navigation.Screen
 import org.d3if3068.assesment3.histoplace.network.ApiStatus
 import org.d3if3068.assesment3.histoplace.network.TempatApi
 import org.d3if3068.assesment3.histoplace.network.UserDataStore
-import org.d3if3068.assesment3.histoplace.ui.theme.AbuAbu
-import org.d3if3068.assesment3.histoplace.ui.theme.HistoPlaceTheme
 import org.d3if3068.assesment3.histoplace.ui.theme.WarnaUtama
 import org.d3if3068.assesment3.histoplace.ui.widget.DisplayAlertDialog
 import org.d3if3068.assesment3.histoplace.ui.widget.InputDialog
@@ -506,7 +500,7 @@ private fun getCroppedImage(
         return null
     }
 
-    var uri = result.uriContent ?: return null
+    val uri = result.uriContent ?: return null
 
     return if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
         MediaStore.Images.Media.getBitmap(resolver, uri)

@@ -28,7 +28,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -49,38 +48,24 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.canhub.cropper.CropImageContract
 import com.canhub.cropper.CropImageContractOptions
 import com.canhub.cropper.CropImageOptions
 import com.canhub.cropper.CropImageView
-import com.squareup.moshi.JsonAdapter
-import com.squareup.moshi.Moshi
-import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import org.d3if3068.assesment3.histoplace.R
 import org.d3if3068.assesment3.histoplace.model.MainViewModel
-import org.d3if3068.assesment3.histoplace.model.Photos
 import org.d3if3068.assesment3.histoplace.model.Tempat
 import org.d3if3068.assesment3.histoplace.network.ApiStatus
 import org.d3if3068.assesment3.histoplace.network.TempatApi
 import org.d3if3068.assesment3.histoplace.ui.theme.AbuGelap
-import org.d3if3068.assesment3.histoplace.ui.theme.HistoPlaceTheme
 import org.d3if3068.assesment3.histoplace.ui.theme.WarnaUtama
-import org.d3if3068.assesment3.histoplace.ui.widget.DisplayAlertDialog
-import org.d3if3068.assesment3.histoplace.ui.widget.InputDialog
 import org.d3if3068.assesment3.histoplace.ui.widget.LoadingAnimation
 import org.d3if3068.assesment3.histoplace.ui.widget.NextInputDialog
-import org.d3if3068.assesment3.histoplace.ui.widget.ProfilDialog
 import org.d3if3068.assesment3.histoplace.ui.widget.RatingItem
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -343,7 +328,7 @@ private fun getCroppedImage(
         return null
     }
 
-    var uri = result.uriContent ?: return null
+    val uri = result.uriContent ?: return null
 
     return if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
         MediaStore.Images.Media.getBitmap(resolver, uri)
