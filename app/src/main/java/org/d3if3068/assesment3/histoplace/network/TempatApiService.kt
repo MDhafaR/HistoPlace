@@ -23,7 +23,7 @@ import retrofit2.http.Part
 import retrofit2.http.Query
 import java.lang.reflect.Type
 
-private const val BASE_URL = "https://fd70-103-233-100-227.ngrok-free.app/"
+private const val BASE_URL = "https://af84-114-79-49-118.ngrok-free.app/"
 
 private val moshi = Moshi.Builder()
     .add(KotlinJsonAdapterFactory())
@@ -55,13 +55,12 @@ interface TempatApiService {
         @Part("rating") rating: RequestBody
     ): OpStatus
 
-    @FormUrlEncoded
-    @PUT("belajarRestApiWeb/files/dhafa/Detail.php")
+    @Multipart
+    @POST("belajarRestApiWeb/files/dhafa/Detail.php")
     suspend fun updateDetail(
-        @Field("alamat") alamat: RequestBody,
-        @Field("map_url") map_url: RequestBody,
-        @Field("catatan") catatan: RequestBody,
-        @Field("id") id: RequestBody,
+        @Part("alamat") alamat: RequestBody,
+        @Part("catatan") catatan: RequestBody,
+        @Part("id") id: RequestBody,
         @Header("Authorization") userId: String
     ): OpStatus
 

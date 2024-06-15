@@ -41,17 +41,15 @@ import org.d3if3068.assesment3.histoplace.ui.theme.Orange
 @Composable
 fun NextInputDialog(
     onDismissRequest: () -> Unit,
-    onConfirmation: (String, String, String) -> Unit
+    onConfirmation: (String, String) -> Unit
 ) {
     var alamat by remember { mutableStateOf("") }
-    var mapUrl by remember { mutableStateOf("") }
     var catatan by remember { mutableStateOf("") }
 
     Dialog(onDismissRequest = { onDismissRequest() }) {
         Card(
             modifier = Modifier
-                .padding(16.dp)
-                .height(600.dp),
+                .padding(16.dp),
             shape = RoundedCornerShape(16.dp)
         ) {
             LazyColumn(
@@ -77,21 +75,6 @@ fun NextInputDialog(
                 item {
 
                     OutlinedTextField(
-                        value = mapUrl,
-                        onValueChange = { mapUrl =  it },
-                        label = { Text(text = stringResource(R.string.map_url)) },
-                        maxLines = 1,
-                        keyboardOptions = KeyboardOptions(
-                            imeAction = ImeAction.Next,
-                            keyboardType = KeyboardType.Number
-                        ),
-                        modifier = Modifier.padding(8.dp)
-                    )
-                }
-
-                item {
-
-                    OutlinedTextField(
                         value = catatan,
                         onValueChange = { catatan = it },
                         label = { Text(text = stringResource(R.string.catatan)) },
@@ -102,36 +85,6 @@ fun NextInputDialog(
                         ),
                         modifier = Modifier.padding(8.dp)
                     )
-                }
-
-                item {
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 8.dp),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        OutlinedButton(
-                            onClick = { onDismissRequest() },
-                            modifier = Modifier.padding(8.dp)
-                        ) {
-                            Text(text = stringResource(R.string.batal))
-                        }
-                        OutlinedButton(
-                            onClick = {
-                                onConfirmation(
-                                    alamat,
-                                    mapUrl,
-                                    catatan
-                                )
-                            },
-                            enabled = alamat.isNotEmpty() && mapUrl.isNotEmpty() && catatan.isNotEmpty(),
-                            modifier = Modifier.padding(8.dp)
-                        ) {
-                            Text(text = stringResource(R.string.simpan))
-                        }
-                    }
                 }
             }
         }

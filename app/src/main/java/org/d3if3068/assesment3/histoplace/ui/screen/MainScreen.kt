@@ -108,12 +108,10 @@ import org.d3if3068.assesment3.histoplace.ui.widget.ProfilDialog
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
-//    onNavigateToScreen: (String, String, Int, String, String, String) -> Unit,
-    navController: NavHostController
+    navController: NavHostController,
+    viewModel: MainViewModel
 ) {
     val context = LocalContext.current
-    val viewModel: MainViewModel = viewModel()
-    val status by viewModel.status.collectAsState()
     val dataStore = UserDataStore(context)
     val user by dataStore.userFlow.collectAsState(User())
 
@@ -182,7 +180,6 @@ fun MainScreen(
     ) { padding ->
         ScreenContent(
             viewModel, user.email, Modifier.padding(padding), navController
-//                onNavigateToScreen
         )
         if (showDialog) {
             ProfilDialog(

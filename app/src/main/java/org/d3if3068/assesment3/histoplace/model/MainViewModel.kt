@@ -88,28 +88,26 @@ class MainViewModel : ViewModel() {
 
     fun saveDetail(
         alamat: String,
-        mapUrl: String,
         catatan: String,
-        id: String, // Tambahkan id sebagai parameter
-        userId: String // Tambahkan userId sebagai parameter
+        id: String,
+        userId: String
     ) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val result = TempatApi.service.updateDetail(
                     alamat.toRequestBody("text/plain".toMediaTypeOrNull()),
-                    mapUrl.toRequestBody("text/plain".toMediaTypeOrNull()),
                     catatan.toRequestBody("text/plain".toMediaTypeOrNull()),
-                    id.toRequestBody("text/plain".toMediaTypeOrNull()), // Kirim id
+                    id.toRequestBody("text/plain".toMediaTypeOrNull()),
                     userId
                 )
 
                 if (result.status == "success") {
-                    retrieveData(userId) // Panggil retrieveData setelah berhasil
+                    retrieveData(userId)
                 } else {
                     throw Exception(result.message)
                 }
             } catch (e: Exception) {
-                Log.d("MainViewModel", "Failure: ${e.message}")
+                Log.d("MainViewModel", "Failure3: ${e.message}")
                 errorMessage.value = "${e.message}"
             }
         }

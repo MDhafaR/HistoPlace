@@ -8,7 +8,6 @@ data class Tempat(
     val kota: String,
     val negara: String,
     val alamat: String?,
-    val map_Url: String?,
     val rating: Int,
     val catatan: String?,
     val mine: Int

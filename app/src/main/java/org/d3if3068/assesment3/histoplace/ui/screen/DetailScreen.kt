@@ -2,6 +2,7 @@ package org.d3if3068.assesment3.histoplace.ui.screen
 
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -57,6 +58,7 @@ import kotlinx.coroutines.launch
 import org.d3if3068.assesment3.histoplace.R
 import org.d3if3068.assesment3.histoplace.model.MainViewModel
 import org.d3if3068.assesment3.histoplace.model.Tempat
+import org.d3if3068.assesment3.histoplace.network.TempatApi
 import org.d3if3068.assesment3.histoplace.ui.theme.AbuGelap
 import org.d3if3068.assesment3.histoplace.ui.theme.HistoPlaceTheme
 import org.d3if3068.assesment3.histoplace.ui.theme.WarnaUtama
@@ -71,23 +73,22 @@ import org.d3if3068.assesment3.histoplace.ui.widget.RatingItem
 fun DetailScreen(
     navController: NavHostController,
     tempat: Tempat,
-    userId: String
+    userId: String,
+    viewModel: MainViewModel
 ) {
-    var showDialog by remember { mutableStateOf(false) }
-    val viewModel: MainViewModel = viewModel()
+    var showDialog by remember { mutableStateOf(true) }
 
     if (tempat.catatan == null) {
-        showDialog = true
-    }
-
-    if (showDialog) {
-        NextInputDialog(
-            onDismissRequest = {
+        if (showDialog) {
+            NextInputDialog(
+                onDismissRequest = {
+                    showDialog = false
+                    navController.popBackStack()
+                },
+            ) { alamat, catatan ->
+                viewModel.saveDetail(alamat, catatan, tempat.id, userId)
                 showDialog = false
             }
-        ) { alamat, mapUrl, catatan ->
-            viewModel.saveDetail(alamat, mapUrl, catatan, tempat.id, userId) // Panggil saveDetail dengan id dan userId
-            showDialog = false
         }
     }
 
@@ -128,12 +129,13 @@ fun DetailContent(
     tempat: Tempat
 ) {
     val context = LocalContext.current
-    val mapIntent = remember { Intent(Intent.ACTION_VIEW, Uri.parse("null")) }
+    val encodeMap = tempat.nama_tempat.replace(" ", "+")
+    val mapIntent = remember { Intent(Intent.ACTION_VIEW, Uri.parse("https://maps.google.com/?q=$encodeMap")) }
 
     Box {
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
-                .data(tempat.image_id)
+                .data(TempatApi.getTempatUrl(tempat.image_id))
                 .crossfade(true)
                 .build(),
             modifier = Modifier
@@ -166,13 +168,20 @@ fun DetailContent(
                             .padding(bottom = 16.dp)
                     ) {
                         Text(
-                            text = tempat.nama_tempat, fontSize = 22.sp, fontWeight = FontWeight.Medium,
+                            text = tempat.nama_tempat,
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Medium,
                             color = Color.Black
                         )
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(2.dp)
                         ) {
-                            arrayOf(1, 2, 3, 4, 5).map { RatingItem(index = it, rating = tempat.rating) }
+                            arrayOf(1, 2, 3, 4, 5).map {
+                                RatingItem(
+                                    index = it,
+                                    rating = tempat.rating
+                                )
+                            }
                         }
                     }
                     Row(
@@ -225,12 +234,17 @@ fun DetailContent(
                             modifier = Modifier.width(300.dp)
                         ) {
                             Text(
-                                text = "",
+                                text = tempat.alamat ?: "",
                                 fontSize = 14.sp,
                                 modifier = Modifier.padding(bottom = 5.dp),
                                 color = AbuGelap,
                             )
-                            Text(text = tempat.kota, fontSize = 14.sp, color = AbuGelap, fontWeight = FontWeight.Medium)
+                            Text(
+                                text = tempat.kota,
+                                fontSize = 14.sp,
+                                color = AbuGelap,
+                                fontWeight = FontWeight.Medium
+                            )
                         }
                         IconButton(modifier = Modifier.size(45.dp), onClick = {
                             context.startActivities(arrayOf(mapIntent))
@@ -253,7 +267,7 @@ fun DetailContent(
                             color = Color.Black
                         )
                         Text(
-                            text = "",
+                            text = tempat.catatan ?: "",
                             fontSize = 14.sp,
                             color = AbuGelap,
                         )

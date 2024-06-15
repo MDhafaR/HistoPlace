@@ -3,6 +3,7 @@ package org.d3if3068.assesment3.histoplace.navigation
 import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.Composable
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -12,12 +13,15 @@ import androidx.navigation.navArgument
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import org.d3if3068.assesment3.histoplace.model.MainViewModel
 import org.d3if3068.assesment3.histoplace.model.Tempat
 import org.d3if3068.assesment3.histoplace.ui.screen.DetailScreen
 import org.d3if3068.assesment3.histoplace.ui.screen.MainScreen
 
 @Composable
 fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
+    val viewModel: MainViewModel = viewModel()
+
     val moshi: Moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
     val jsonAdapter: JsonAdapter<Tempat> = moshi.adapter(Tempat::class.java)
 
@@ -26,7 +30,7 @@ fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
         startDestination = Screen.Home.route
     ) {
         composable(route = Screen.Home.route) {
-            MainScreen(navController)
+            MainScreen(navController, viewModel)
         }
 
         composable(
@@ -41,7 +45,7 @@ fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
             if (tempatJson != null && userId != null) {
                 val tempat = jsonAdapter.fromJson(Uri.decode(tempatJson))
                 if (tempat != null) {
-                    DetailScreen(navController, tempat, userId) // Kirim userId ke DetailScreen
+                    DetailScreen(navController, tempat, userId, viewModel) // Kirim userId ke DetailScreen
                 } else {
                     Log.e("SetupNavGraph", "Failed to parse Tempat from JSON: $tempatJson")
                 }
