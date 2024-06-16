@@ -17,7 +17,7 @@ import retrofit2.http.POST
 import retrofit2.http.Part
 import retrofit2.http.Query
 
-private const val BASE_URL = "https://amazed-possum-heartily.ngrok-free.app/"
+private const val BASE_URL = "https://d3if3068.my.id/files/resting/"
 
 private val moshi = Moshi.Builder()
     .add(KotlinJsonAdapterFactory())
@@ -29,16 +29,16 @@ private val retrofit = Retrofit.Builder()
     .build()
 
 interface TempatApiService {
-    @GET("belajarRestApiWeb/files/dhafa/Tempat.php")
+    @GET("Tempat.php")
     suspend fun getTempat(
         @Header("Authorization") userId: String
     ): List<Tempat>
 
-    @GET("belajarRestApiWeb/files/dhafa/TempatSearch.php")
+    @GET("TempatSearch.php")
     suspend fun searchBooksByTitle(@Query("search") searchQuery: String): List<Tempat>
 
     @Multipart
-    @POST("belajarRestApiWeb/files/dhafa/AddData.php")
+    @POST("AddData.php")
     suspend fun postTempat(
         @Header("Authorization") userId: String,
         @Part image_id: MultipartBody.Part,
@@ -49,20 +49,20 @@ interface TempatApiService {
         @Part("rating") rating: RequestBody
     ): OpStatus
 
-    @GET("belajarRestApiWeb/files/dhafa/photos.php")
+    @GET("photos.php")
     suspend fun getPhots(
         @Query("tempat_id") id: String,
     ): List<Photos>
 
     @Multipart
-    @POST("belajarRestApiWeb/files/dhafa/AddPhotos.php")
+    @POST("AddPhotos.php")
     suspend fun postPhotos(
         @Part photoUrl: MultipartBody.Part,
         @Part("tempat_id") tempat_id: RequestBody
     ): OpStatus
 
     @Multipart
-    @POST("belajarRestApiWeb/files/dhafa/Detail.php")
+    @POST("Detail.php")
     suspend fun updateDetail(
         @Part("alamat") alamat: RequestBody,
         @Part("catatan") catatan: RequestBody,
@@ -70,7 +70,7 @@ interface TempatApiService {
         @Header("Authorization") userId: String
     ): OpStatus
 
-    @DELETE("belajarRestApiWeb/files/dhafa/DeleteData.php")
+    @DELETE("DeleteData.php")
     suspend fun deleteData(
         @Header("Authorization") userId: String,
         @Query("id") id: String
@@ -84,12 +84,12 @@ object TempatApi {
 
     fun getTempatUrl(imageId: String): String {
         val encodedImageId = imageId.replace("&", "%26")
-        return "${BASE_URL}belajarRestApiWeb/files/dhafa/image.php?image_id=$encodedImageId"
+        return "${BASE_URL}image.php?image_id=$encodedImageId"
     }
 
     fun getPhotosUrl(imageId: String): String {
         val encodedImageId = imageId.replace("&", "%26")
-        return "${BASE_URL}belajarRestApiWeb/files/dhafa/imagePhotos.php?photoUrl=$encodedImageId"
+        return "${BASE_URL}imagePhotos.php?photoUrl=$encodedImageId"
     }
 }
 
