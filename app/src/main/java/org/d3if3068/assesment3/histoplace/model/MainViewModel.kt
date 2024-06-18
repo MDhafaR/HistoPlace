@@ -3,6 +3,7 @@ package org.d3if3068.assesment3.histoplace.model
 import android.graphics.Bitmap
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
+import androidx.datastore.core.IOException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
@@ -14,6 +15,8 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.d3if3068.assesment3.histoplace.network.ApiStatus
 import org.d3if3068.assesment3.histoplace.network.TempatApi
+import retrofit2.HttpException
+import retrofit2.Response
 import java.io.ByteArrayOutputStream
 
 class MainViewModel : ViewModel() {
@@ -104,27 +107,49 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    fun savePhotos(
-        bitmap: Bitmap,
-        id: String
-    ) {
+    fun savePhotos(bitmap: Bitmap, id: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val result = TempatApi.service.postPhotos(
-                    bitmap.toMultipartBody(),
-                    id.toRequestBody("text/plain".toMediaTypeOrNull())
-                )
+                val bitmapPart = bitmap.toPhotos()
+                val idPart = id.toRequestBody("text/plain".toMediaTypeOrNull())
 
-                if (result.status == "success")
-                    retrievePhotos(id)
-                else
-                    throw Exception(result.message)
+                Log.d("MainViewModel", "Starting upload for id: $id")
+
+                val response: Response<OpStatus> = TempatApi.service.postPhotos(bitmapPart, idPart)
+
+                Log.d("MainViewModel", "Received response with code: ${response.code()}")
+
+                if (response.isSuccessful) {
+                    val result = response.body()
+                    Log.d("MainViewModel", "Response body: $result")
+                    if (result?.status == "success") {
+                        Log.d("MainViewModel", "Upload successful")
+                        retrievePhotos(id)
+                    } else {
+                        val errorMessage = result?.message ?: "Terjadi kesalahan saat mengunggah file"
+                        Log.e("MainViewModel", "Upload failed with message: $errorMessage")
+                        throw Exception(errorMessage)
+                    }
+                } else {
+                    val errorBody = response.errorBody()?.string()
+                    Log.e("MainViewModel", "Error response body: $errorBody")
+                    throw Exception(errorBody ?: "Terjadi kesalahan saat mengunggah file")
+                }
+            } catch (e: HttpException) {
+                val errorBody = e.response()?.errorBody()?.string()
+                Log.e("MainViewModel", "HttpException: $errorBody")
+                errorMessage.value = errorBody ?: "Unknown error"
+            } catch (e: IOException) {
+                Log.e("MainViewModel", "Network Failure: ${e.message}")
+                errorMessage.value = "Network Failure: ${e.message}"
             } catch (e: Exception) {
-                Log.d("MainViewModel", "Failure4: ${e.message}")
-                errorMessage.value = "${e.message}"
+                Log.e("MainViewModel", "General Exception: ${e.message}")
+                errorMessage.value = e.message ?: "Unknown error"
             }
         }
     }
+
+
 
     fun saveDetail(
         alamat: String,
@@ -197,6 +222,17 @@ class MainViewModel : ViewModel() {
         return MultipartBody.Part.createFormData(
             "image_id", "image.jpg", requestBody)
     }
+
+    private fun Bitmap.toPhotos(): MultipartBody.Part {
+        val stream = ByteArrayOutputStream()
+        compress(Bitmap.CompressFormat.JPEG, 80, stream)
+        val byteArray = stream.toByteArray()
+        val requestBody = byteArray.toRequestBody(
+            "image/jpg".toMediaTypeOrNull(), 0, byteArray.size)
+        return MultipartBody.Part.createFormData(
+            "photoUrl", "image.jpg", requestBody)
+    }
+
 
     fun clearMessage() { errorMessage.value = null }
 }

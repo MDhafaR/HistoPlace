@@ -7,6 +7,7 @@ import okhttp3.RequestBody
 import org.d3if3068.assesment3.histoplace.model.OpStatus
 import org.d3if3068.assesment3.histoplace.model.Photos
 import org.d3if3068.assesment3.histoplace.model.Tempat
+import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import retrofit2.http.DELETE
@@ -59,7 +60,7 @@ interface TempatApiService {
     suspend fun postPhotos(
         @Part photoUrl: MultipartBody.Part,
         @Part("tempat_id") tempat_id: RequestBody
-    ): OpStatus
+    ): Response<OpStatus>
 
     @Multipart
     @POST("Detail.php")
