@@ -76,6 +76,11 @@ interface TempatApiService {
         @Header("Authorization") userId: String,
         @Query("id") id: String
     ) : OpStatus
+
+    @DELETE("DeletePhoto.php")
+    suspend fun deletePhoto(
+        @Query("id") id: String
+    ) : OpStatus
 }
 
 object TempatApi {

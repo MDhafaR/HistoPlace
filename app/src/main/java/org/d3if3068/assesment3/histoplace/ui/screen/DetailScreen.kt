@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.canhub.cropper.CropImageContract
 import com.canhub.cropper.CropImageContractOptions
@@ -66,6 +67,7 @@ import org.d3if3068.assesment3.histoplace.ui.theme.AbuGelap
 import org.d3if3068.assesment3.histoplace.ui.theme.WarnaUtama
 import org.d3if3068.assesment3.histoplace.ui.widget.LoadingAnimation
 import org.d3if3068.assesment3.histoplace.ui.widget.NextInputDialog
+import org.d3if3068.assesment3.histoplace.ui.widget.PhotosDialog
 import org.d3if3068.assesment3.histoplace.ui.widget.RatingItem
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -102,7 +104,8 @@ fun DetailScreen(
         DetailContent(
             modifier = Modifier.padding(padding),
             tempat,
-            viewModel
+            viewModel,
+            navController
         )
         if (tempat.catatan == null) {
             if (showDialog) {
@@ -125,7 +128,8 @@ fun DetailScreen(
 fun DetailContent(
     modifier: Modifier,
     tempat: Tempat,
-    viewModel: MainViewModel
+    viewModel: MainViewModel,
+    navController: NavHostController
 ) {
     val context = LocalContext.current
     val encodeMap = tempat.nama_tempat.replace(" ", "+")
@@ -138,10 +142,26 @@ fun DetailContent(
     val launcher = rememberLauncherForActivityResult(CropImageContract()) {
         bitmap = getCroppedImage(context.contentResolver, it)
         viewModel.savePhotos(bitmap!!, tempat.id)
+        navController.popBackStack()
     }
+    var showInputDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(tempat.id) {
         viewModel.retrievePhotos(tempat.id)
+    }
+
+    var gambarSaatIni: String by remember { mutableStateOf("") }
+    var idSaatIni: String by remember { mutableStateOf("") }
+    var tempatIdSaatIni: String by remember { mutableStateOf("") }
+
+    if (showInputDialog) {
+        PhotosDialog(
+            id = idSaatIni,
+            tempatId = tempatIdSaatIni,
+            gambar = gambarSaatIni,
+            onDismissRequest = { showInputDialog = false },
+            viewModel
+        )
     }
 
     Box {
@@ -219,7 +239,7 @@ fun DetailContent(
                                 if (status == ApiStatus.LOADING) {
                                     LoadingAnimation()
                                 } else {
-                                    AsyncImage(
+                                    SubcomposeAsyncImage(
                                         model = ImageRequest.Builder(LocalContext.current)
                                             .data(TempatApi.getPhotosUrl(photo.photoUrl))
                                             .crossfade(true)
@@ -228,6 +248,13 @@ fun DetailContent(
                                         contentScale = ContentScale.Crop,
                                         modifier = Modifier
                                             .padding(end = 18.dp)
+                                            .clickable {
+                                                idSaatIni = photo.id
+                                                tempatIdSaatIni = photo.tempat_id
+                                                gambarSaatIni =
+                                                    TempatApi.getPhotosUrl(photo.photoUrl)
+                                                showInputDialog = true
+                                            }
                                             .clip(RoundedCornerShape(17.dp))
                                             .width(110.dp)
                                             .height(88.dp)

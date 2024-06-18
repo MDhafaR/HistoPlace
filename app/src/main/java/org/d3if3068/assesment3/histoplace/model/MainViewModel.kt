@@ -197,6 +197,24 @@ class MainViewModel : ViewModel() {
         }
     }
 
+    fun deletePhoto(id: String, tempatId: String){
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val response = TempatApi.service.deletePhoto(id)
+                if (response.status == "success") {
+                    Log.d("MainViewModel", "Image deleted successfully: $id")
+                    retrievePhotos(tempatId)
+                } else {
+                    Log.d("MainViewModel", "Failed to delete the image: ${response.message}")
+                    errorMessage.value = "Failed to delete the image: ${response.message}"
+                }
+            } catch (e: Exception) {
+                Log.d("MainViewModel", "Failure: ${e.message}")
+                errorMessage.value = "Error: ${e.message}"
+            }
+        }
+    }
+
     fun searchBooksByTitle(query: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {

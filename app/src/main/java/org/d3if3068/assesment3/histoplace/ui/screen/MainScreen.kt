@@ -68,7 +68,6 @@ import androidx.credentials.GetCredentialResponse
 import androidx.credentials.exceptions.ClearCredentialException
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.navigation.NavHostController
-import coil.compose.AsyncImage
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.canhub.cropper.CropImageContract
@@ -344,7 +343,6 @@ fun ListItem(
             .padding(bottom = 30.dp)
             .fillMaxWidth()
             .clickable {
-                       // ini yang akan dikirim
                 try {
                     Log.d("Navigation", "Navigating to DetailScreen with data: $tempatJson")
                     navController.navigate(Screen.Detail.createRoute(tempatJson, userId))
